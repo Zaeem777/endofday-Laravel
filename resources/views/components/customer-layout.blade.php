@@ -74,7 +74,7 @@
             <nav class="flex-1 p-4 space-y-2">
                 <a href="/Customer/restaurants" class="block px-4 py-2 rounded hover:bg-blue-100">🍽️ Browse
                     Restaurants</a>
-                <a href="/Customer/orders" class="block px-4 py-2 rounded hover:bg-blue-100">🛒 My Orders</a>
+                <a href="/Customer/showorders" class="block px-4 py-2 rounded hover:bg-blue-100">🛒 My Orders</a>
                 <a href="/Customer/favorites" class="block px-4 py-2 rounded hover:bg-blue-100">❤️ Favorites</a>
                 <a href="/Customer/reviews" class="block px-4 py-2 rounded hover:bg-blue-100">⭐ My Reviews</a>
                 <a href="/Customer/profile" class="block px-4 py-2 rounded hover:bg-blue-100">👤 Profile</a>

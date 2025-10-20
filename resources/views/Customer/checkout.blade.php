@@ -1,69 +1,126 @@
 <x-customer-layout>
-    <div class="max-w-7xl mx-auto px-4 py-10" x-data="checkoutCart({{ $cartItems->map(fn($i) => [
-    'id' => $i->id,
-    'name' => $i->listing->name,
-    'price' => $i->price,
-    'quantity' => $i->quantity,
-    'image' => $i->listing->image ? Storage::url($i->listing->image) : 'https://via.placeholder.com/80'
-]) }})">
+    <div class="max-w-7xl mx-auto px-4 py-10" 
+        x-data="checkoutCart({{ $cartItems->map(fn($i) => [
+            'id' => $i->id,
+            'name' => $i->listing->name,
+            'price' => $i->price,
+            'discountedprice' => $i->listing->discountedprice,
+            'quantity' => $i->quantity,
+            'image' => $i->listing->image ? Storage::url($i->listing->image) : 'https://via.placeholder.com/80'
+        ]) }})">
 
         <h1 class="text-3xl font-bold text-gray-800 mb-8">Checkout</h1>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
             <!-- Cart Items -->
-            <div class="lg:col-span-2 bg-white rounded-lg shadow-md p-6">
-                <h2 class="text-xl font-semibold text-gray-700 mb-4">Your Items</h2>
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Items Section -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-xl font-semibold text-gray-700 mb-4">Your Items</h2>
 
-                <!-- Items -->
-                <template x-if="items.length > 0">
-                    <div class="space-y-4">
-                        <template x-for="item in items" :key="item.id">
-                            <div class="flex items-center justify-between border-b pb-4">
+                    <template x-if="items.length > 0">
+                        <div class="space-y-4">
+                            <template x-for="item in items" :key="item.id">
+                                <div class="flex items-center justify-between border-b pb-4">
+                                    <!-- Image + Name -->
+                                    <div class="flex items-center space-x-4">
+                                        <img :src="item.image" :alt="item.name" class="w-16 h-16 object-cover rounded">
+                                        <div>
+                                            <h3 class="text-lg font-medium text-gray-900" x-text="item.name"></h3>
+                                            <p class="text-gray-500 text-sm"><span x-text="item.discountedprice"></span> PKR each</p>
+                                        </div>
+                                    </div>
 
-                                <!-- Image + Name -->
-                                <div class="flex items-center space-x-4">
-                                    <img :src="item.image" :alt="item.name" class="w-16 h-16 object-cover rounded">
-                                    <div>
-                                        <h3 class="text-lg font-medium text-gray-900" x-text="item.name"></h3>
-                                        <p class="text-gray-500 text-sm"><span x-text="item.price"></span> PKR each</p>
+                                    <!-- Quantity Controls -->
+                                    <div class="flex items-center space-x-3">
+                                        <button @click="updateQty(item.id, -1)"
+                                            class="w-7 h-7 flex items-center justify-center bg-gray-200 rounded-full hover:bg-gray-300 transition">
+                                            <span class="text-gray-700 font-bold">−</span>
+                                        </button>
+                                        <span class="px-3 py-1 bg-gray-100 rounded text-gray-800 font-medium"
+                                            x-text="item.quantity"></span>
+                                        <button @click="updateQty(item.id, 1)"
+                                            class="w-7 h-7 flex items-center justify-center bg-gray-200 rounded-full hover:bg-gray-300 transition">
+                                            <span class="text-gray-700 font-bold">+</span>
+                                        </button>
+                                    </div>
+
+                                    <!-- Subtotal + Remove -->
+                                    <div class="text-right">
+                                        <p class="text-blue-600 font-bold"
+                                            x-text="(item.discountedprice * item.quantity) + ' PKR'"></p>
+                                        <button @click="removeItem(item.id)"
+                                            class="text-red-500 hover:text-red-700 text-sm mt-2">
+                                            Remove
+                                        </button>
                                     </div>
                                 </div>
+                            </template>
+                        </div>
+                    </template>
 
-                                <!-- Quantity Controls -->
-                                <div class="flex items-center space-x-3">
-                                    <button @click="updateQty(item.id, -1)"
-                                        class="w-7 h-7 flex items-center justify-center bg-gray-200 rounded-full hover:bg-gray-300 transition">
-                                        <span class="text-gray-700 font-bold">−</span>
-                                    </button>
+                    <template x-if="items.length === 0">
+                        <p class="text-gray-500 text-center py-6">Your cart is empty 🛒</p>
+                    </template>
+                </div>
 
-                                    <span class="px-3 py-1 bg-gray-100 rounded text-gray-800 font-medium"
-                                        x-text="item.quantity"></span>
+                <!-- Address Section -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-xl font-semibold text-gray-700 mb-4">Delivery Address</h2>
 
-                                    <button @click="updateQty(item.id, 1)"
-                                        class="w-7 h-7 flex items-center justify-center bg-gray-200 rounded-full hover:bg-gray-300 transition">
-                                        <span class="text-gray-700 font-bold">+</span>
-                                    </button>
+                    @if($addresses->count() > 0)
+                        <div class="space-y-3 mb-4">
+                            @foreach($addresses as $address)
+                                <div class="flex justify-between items-center border p-3 rounded-lg">
+                                    <div>
+                                        <input type="radio" name="address_id" value="{{ $address->id }}" 
+                                            {{ $loop->first ? 'checked' : '' }} class="mr-2">
+                                        <span class="text-gray-800">
+                                            {{ $address->address_line1 }}, {{ $address->city }}, {{ $address->country }}
+                                        </span>
+                                    </div>
+                                    <!-- Delete Button -->
+                                    <form action="{{ route('Customer.address.destroy', $address->id) }}" method="POST">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="text-red-500 hover:text-red-700">🗑</button>
+                                    </form>
                                 </div>
+                            @endforeach
+                        </div>
+                    @else
+                        <p class="text-gray-500 mb-4">No saved addresses yet. Please add one below.</p>
+                    @endif
 
-                                <!-- Subtotal + Remove -->
-                                <div class="text-right">
-                                    <p class="text-blue-600 font-bold" x-text="(item.price * item.quantity) + ' PKR'">
-                                    </p>
-                                    <button @click="removeItem(item.id)"
-                                        class="text-red-500 hover:text-red-700 text-sm mt-2">
-                                        Remove
-                                    </button>
-                                </div>
-                            </div>
-                        </template>
-                    </div>
-                </template>
+                    <!-- Add New Address -->
+                    <button type="button" onclick="document.getElementById('addAddressForm').classList.toggle('hidden')"
+                        class="text-blue-600 hover:text-blue-800 font-medium text-sm">
+                        + Add New Address
+                    </button>
 
-                <!-- Empty Cart -->
-                <template x-if="items.length === 0">
-                    <p class="text-gray-500 text-center py-6">Your cart is empty 🛒</p>
-                </template>
+                    <!-- Hidden Add Address Form -->
+                    <form id="addAddressForm" action="{{ route('Customer.address.store') }}" method="POST" 
+                        class="mt-4 space-y-3 hidden">
+                        @csrf
+                        <input type="text" name="address_line1" placeholder="Address Line 1" class="w-full border rounded-lg p-2" required>
+                        <input type="text" name="city" placeholder="City" class="w-full border rounded-lg p-2" required>
+                        <input type="text" name="state" placeholder="State" class="w-full border rounded-lg p-2">
+                        <input type="text" name="postal_code" placeholder="Postal Code" class="w-full border rounded-lg p-2">
+                        <input type="text" name="country" placeholder="Country" class="w-full border rounded-lg p-2" required>
+                        <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
+                            Save Address
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Special Instructions -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-xl font-semibold text-gray-700 mb-4">Special Instructions</h2>
+                    <textarea name="special_instructions" form="placeOrderForm"
+                        placeholder="Write any notes for the Restaurant Owner"
+                        class="w-full border rounded-lg p-3 text-gray-700" rows="3"></textarea>
+                </div>
             </div>
 
             <!-- Order Summary -->
@@ -87,8 +144,10 @@
                             <span x-text="(subtotal() + 200) + ' PKR'"></span>
                         </div>
 
-                        <form action="{{ route('Customer.placeorder') }}" method="POST" class="mt-6">
+                        <!-- Place Order Form -->
+                        <form id="placeOrderForm" action="{{ route('Customer.placeorder') }}" method="POST" class="mt-6">
                             @csrf
+                            <input type="hidden" name="address_id" value="{{ $addresses->first()->id ?? '' }}">
                             <button type="submit"
                                 class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition font-semibold"
                                 :disabled="items.length === 0"
@@ -103,7 +162,6 @@
                     <p class="text-gray-500 text-center py-6">No items in cart 🛒</p>
                 </template>
             </div>
-
         </div>
     </div>
 
@@ -111,15 +169,12 @@
         function checkoutCart(initialItems) {
             return {
                 items: initialItems,
-
                 subtotal() {
-                    return this.items.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+                    return this.items.reduce((sum, i) => sum + (i.discountedprice * i.quantity), 0);
                 },
-
                 async updateQty(id, change) {
                     let item = this.items.find(i => i.id === id);
                     if (!item) return;
-
                     let newQty = item.quantity + change;
                     if (newQty < 1) return this.removeItem(id);
 
@@ -132,13 +187,11 @@
                         },
                         body: JSON.stringify({ quantity: newQty })
                     });
-
                     let data = await response.json();
                     if (data.success) {
                         item.quantity = data.quantity;
                     }
                 },
-
                 async removeItem(id) {
                     let url = "{{ route('Customer.checkout.update', ['cart' => ':id']) }}".replace(':id', id);
                     let response = await fetch(url, {
@@ -149,7 +202,6 @@
                         },
                         body: JSON.stringify({ quantity: 0 })
                     });
-
                     let data = await response.json();
                     if (data.success && data.removed) {
                         this.items = this.items.filter(i => i.id !== id);

@@ -9,6 +9,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\RestaurantController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Middleware\RestaurantOwnerMiddleware;
+use Pest\ArchPresets\Custom;
 
 //Signup Pages
 
@@ -57,18 +58,16 @@ Route::middleware([RestaurantOwnerMiddleware::class])->group(function () {
 
 //Create listings
 Route::middleware([RestaurantOwnerMiddleware::class])->group(function () {
-    Route::get('/Restaurant/createlisting', function(){
+    Route::get('/Restaurant/createlisting', function () {
         return view('Restaurant.createlisting');
     });
 
     Route::post('/Restaurant/createlisting', [RestaurantController::class, 'createlisting'])->name('Restaurant.createlisting');
-
-
 });
 
 //View, Edit ,Update , Delete Listings
 Route::middleware([RestaurantOwnerMiddleware::class])->group(function () {
-    Route::get('/Restaurant/showlistings',[RestaurantController::class, 'showlistings'])->name('Restaurant.showlistings');
+    Route::get('/Restaurant/showlistings', [RestaurantController::class, 'showlistings'])->name('Restaurant.showlistings');
     Route::get('/Restaurant/listings/{id}/edit', [RestaurantController::class, 'editform'])->name('listing.edit');
     Route::put('/Restaurant/listings/{id}', [RestaurantController::class, 'update'])->name('listing.update');
     Route::delete('/Restaurant/listings/{id}', [RestaurantController::class, 'deletelisting'])->name('listing.destroy');
@@ -93,7 +92,6 @@ Route::middleware([CustomerMiddleware::class])->group(function () {
 Route::middleware([CustomerMiddleware::class])->group(function () {
     Route::get('/Customer/restaurants', [CustomerController::class, 'viewRestaurants'])->name('Customer.restaurants');
     Route::get('/Customer/restaurant/{id}/menu', [CustomerController::class, 'viewRestaurantMenu'])->name('Customer.restaurant.menu');
-
 });
 
 
@@ -110,4 +108,16 @@ Route::middleware([CustomerMiddleware::class])->group(function () {
     Route::get('/Customer/checkout', [CustomerController::class, 'checkout'])->name('Customer.checkout');
     Route::post('/Customer/placeorder', [CustomerController::class, 'placeOrder'])->name('Customer.placeorder');
     Route::patch('/Customer/checkout/update/{cart}', [CartController::class, 'checkoutupdate'])->name('Customer.checkout.update');
+});
+
+// Customer Address Routes
+Route::middleware([CustomerMiddleware::class])->group(function () {
+    Route::post('/Customer/addaddresses', [CustomerController::class, 'storeAddress'])->name('Customer.address.store');
+    Route::delete('/Customer/deleteaddress/{id}', [CustomerController::class, 'deleteAddress'])->name('Customer.address.destroy');
+});
+
+//Customer Order Routes
+Route::middleware([CustomerMiddleware::class])->group(function () {
+    Route::post('/Customer/placeorder', [CustomerController::class, 'placeorder'])->name('Customer.placeorder');
+    Route::get('/Customer/showorders', [CustomerController::class, 'showorders'])->name('Customer.orders.show');
 });
