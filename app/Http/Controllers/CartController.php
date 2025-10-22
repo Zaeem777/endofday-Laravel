@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use DB;
 use App\Models\Cart;
 use App\Models\Listings;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class CartController extends Controller
 {
@@ -18,60 +18,101 @@ class CartController extends Controller
 
         return view('cart.index', compact('cartItems'));
     }
+    public function store(Request $request)
+    {
+        try {
+            $listing = Listings::findOrFail($request->listing_id);
+            $restaurantId = $listing->bakery_id;
 
-public function store(Request $request)
-{
-    $listingId = $request->input('listing_id');
-    $listing   = Listings::findOrFail($listingId);
+            $cartItems = Cart::with('listing')
+                ->where('customer_id', Auth::id())
+                ->get();
 
-    // find or create the cart item
-    $cartItem = Cart::firstOrCreate(
-        [
-            'customer_id' => auth()->id(),
-            'listing_id'  => $listingId,
-        ],
-        [
-            'quantity' => 0, // start with 0 so we can add below
-            'price'    => $listing->price,
-        ]
-    );
+            if ($cartItems->isNotEmpty()) {
+                $currentRestaurantId = $cartItems->first()->listing->bakery_id;
 
-    // always increment properly
-    $cartItem->quantity += $request->input('quantity', 1);
-    $cartItem->save();
+                if ($currentRestaurantId !== $restaurantId) {
+                    return response()->json([
+                        'success' => false,
+                        'conflict' => true,
+                        'message' => 'Your cart has items from another restaurant. Clear cart to continue?',
+                    ]);
+                }
+            }
 
-    // get full cart again
-    $cartItems = Cart::where('customer_id', auth()->id())->get();
-    $cartTotal = $cartItems->sum(fn($i) => $i->price * $i->quantity);
+            // Increment quantity or create new
+            $cart = Cart::where('customer_id', auth()->id())
+                ->where('listing_id', $listing->id)
+                ->first();
 
-    return response()->json([
-        'success'   => true,
-        'message'   => 'Item added to cart!',
-        'cartCount' => $cartItems->sum('quantity'),
-        'cartTotal' => $cartTotal,
-        'cartItems' => view('partials.cart-items', compact('cartItems'))->render()
-    ]);
-}
+            $newQuantity = $cart ? $cart->quantity + 1 : 1;
 
+            if ($newQuantity > $listing->remainingitem) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot add more items than available in stock.',
+                ], 400);
+            }
+            if ($cart) {
+                $cart->increment('quantity');
+            } else {
+                $cart = Cart::create([
+                    'customer_id' => auth()->id(),
+                    'listing_id'  => $listing->id,
+                    'price'       => $listing->discountedprice,
+                    'quantity'    => 1,
+                ]);
+            }
 
+            $cartItems = Cart::with('listing')
+                ->where('customer_id', auth()->id())
+                ->get();
+
+            $cartTotal = $cartItems->sum(fn($i) => $i->listing->discountedprice * $i->quantity);
+            $cartCount = $cartItems->sum('quantity');
+
+            return response()->json([
+                'success'   => true,
+                'message'   => 'Item added to cart!',
+                'cartCount' => $cartCount,
+                'cartTotal' => $cartTotal,
+                'cartItems' => view('partials.cart-items', compact('cartItems'))->render()
+
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
 
 
     // Update quantity (AJAX only)
     public function update(Request $request, Cart $cart)
     {
+        $listing = $cart->listing;
+
+        if ($request->quantity > $listing->remainingitem) {
+            return response()->json([
+                'success'   => false,
+                'message'   => 'Not enough stock available!',
+            ], 400);
+        }
         $cart->update([
             'quantity' => $request->input('quantity'),
         ]);
-
-        $cartItems = Cart::where('customer_id', auth()->id())->get();
-        $total     = $cartItems->sum(fn($i) => $i->price * $i->quantity);
+        $cart->load('listing');
+        $cartItems = Cart::with('listing')
+            ->where('customer_id', auth()->id())->get();
+        $total     = $cartItems->sum(fn($i) => $i->listing->discountedprice * $i->quantity);
         $cartCount = $cartItems->sum('quantity');
 
         return response()->json([
             'success'   => true,
             'message'   => 'Cart updated!',
             'quantity'  => $cart->quantity,
-            'itemTotal' => $cart->price * $cart->quantity,
+            'itemTotal' => $cart->listing->discountedprice * $cart->quantity,
             'cartTotal' => $total,
             'cartCount' => $cartCount,
         ]);
@@ -94,23 +135,51 @@ public function store(Request $request)
         ]);
     }
 
+    //clear cart
+    public function clear()
+    {
+        Cart::where('customer_id', auth()->id())->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Cart cleared!',
+        ]);
+    }
+
 
     //update cart in checkout page
-public function checkoutupdate(Request $request, Cart $cart)
-{
-if(!$cart){
-    return response()->json([
-        'success'   => false,
-        'message'   => 'Item not found in cart!',
-    ]);
-}
-    $request->validate([
-        'quantity' => 'required|integer|min:0'
-    ]);
+    public function checkoutupdate(Request $request, Cart $cart)
+    {
+        if (!$cart) {
+            return response()->json([
+                'success'   => false,
+                'message'   => 'Item not found in cart!',
+            ]);
+        }
+        $request->validate([
+            'quantity' => 'required|integer|min:0'
+        ]);
 
-    // If quantity is 0, delete the cart item
-    if ($request->quantity == 0) {
-        $cart->delete();
+        // If quantity is 0, delete the cart item
+        if ($request->quantity == 0) {
+            $cart->delete();
+
+            $cartItems = Cart::where('customer_id', auth()->id())->get();
+            $total     = $cartItems->sum(fn($i) => $i->price * $i->quantity);
+            $cartCount = $cartItems->sum('quantity');
+
+            return response()->json([
+                'success'   => true,
+                'removed'   => true,
+                'cartTotal' => $total,
+                'cartCount' => $cartCount,
+            ]);
+        }
+
+        // Otherwise, update quantity
+        $cart->update([
+            'quantity' => $request->quantity,
+        ]);
 
         $cartItems = Cart::where('customer_id', auth()->id())->get();
         $total     = $cartItems->sum(fn($i) => $i->price * $i->quantity);
@@ -118,29 +187,11 @@ if(!$cart){
 
         return response()->json([
             'success'   => true,
-            'removed'   => true,
+            'removed'   => false,
+            'quantity'  => $cart->quantity,
+            'itemTotal' => $cart->price * $cart->quantity,
             'cartTotal' => $total,
             'cartCount' => $cartCount,
         ]);
     }
-
-    // Otherwise, update quantity
-    $cart->update([
-        'quantity' => $request->quantity,
-    ]);
-
-    $cartItems = Cart::where('customer_id', auth()->id())->get();
-    $total     = $cartItems->sum(fn($i) => $i->price * $i->quantity);
-    $cartCount = $cartItems->sum('quantity');
-
-    return response()->json([
-        'success'   => true,
-        'removed'   => false,
-        'quantity'  => $cart->quantity,
-        'itemTotal' => $cart->price * $cart->quantity,
-        'cartTotal' => $total,
-        'cartCount' => $cartCount,
-    ]);
-}
-
 }

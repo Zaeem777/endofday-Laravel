@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use App\Models\Order_items;
+use App\Models\User;
+
 use Illuminate\Database\Eloquent\Model;
 
 class Order extends Model
@@ -10,7 +13,6 @@ class Order extends Model
         'user_id',
         'restaurant_id',
         'address_id',
-        'listing_ids',
         'status',
         'payment_status',
         'subtotal',
@@ -18,22 +20,19 @@ class Order extends Model
         'total_price',
         'special_instructions',
     ];
-    protected $casts = [
-        'listing_ids' => 'array',
-    ];
 
-    public function restaurant()
+    public function user()
     {
-        return $this->belongsTo(User::class, 'restaurant_id');
+        return $this->belongsTo(User::class, 'user_id');
     }
 
-    // public function listing()
-    // {
-    //     return $this->hasMany(Listings::class, 'id', 'listing_ids');
-    // }
-
-    public function order_items()
+    public function items()
     {
-        return $this->hasMany(Order_items::class, 'id', 'order_id');
+        return $this->hasMany(Order_items::class, 'order_id');
+    }
+
+    public function address()
+    {
+        return $this->belongsTo(Address::class);
     }
 }

@@ -4,7 +4,7 @@
             $abc = $item->listing->discountedprice
         @endphp
 
-        <div class="flex items-center justify-between py-3 border-b">
+        <div class="flex items-center justify-between py-3 border-b" id="cart-item-{{ $item->id }}">
             <div>
                 <p class="font-medium text-gray-800">{{ $item->listing->name }}</p>
                 <p class="text-sm text-gray-500">{{ $item->listing->discountedprice }} PKR each</p>
@@ -30,12 +30,13 @@
 
                 <!-- Item Total -->
                 <p id="itemTotal-{{ $item->id }}" class="font-semibold text-gray-700 w-16 text-right">
-                    {{ $abc * $item->quantity }} PKR
+                    {{ $item->listing->discountedprice * $item->quantity }} PKR
                 </p>
                 <button type="button" @click="window.deleteCartItem({{ $item->id }})"
                     class="text-red-500 hover:text-red-700 ml-2">
                     ✖
                 </button>
+
             </div>
         </div>
     @endforeach

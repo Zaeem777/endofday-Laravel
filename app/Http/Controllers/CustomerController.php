@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Order_items;
 use App\Models\Order;
 use App\Models\Address;
 use App\Models\User;
@@ -146,7 +147,6 @@ class CustomerController extends Controller
         ]);
 
         $user = Auth::user();
-        echo $user->id;
 
         $cartItems = cart::with('listing')->where('customer_id', $user->id)->get();
         if ($cartItems->isEmpty()) {
@@ -157,17 +157,12 @@ class CustomerController extends Controller
         $deliveryFee = 200; // Change if dynamic
         $totalPrice = $subtotal + $deliveryFee;
 
-        $listingIds = $cartItems->map(fn($item) => $item->listing_id);
-
         $restaurantId = $cartItems->first()->listing->bakery_id;
-        echo $subtotal;
-        echo $listingIds;
-        echo $restaurantId;
+
         $order = Order::create([
             'user_id' => $user->id,
             'restaurant_id' => $restaurantId,
             'address_id' => $request->address_id,
-            'listing_ids' => $listingIds->toJson(),
             'status' => 'pending',
             'payment_status' => 'unpaid',
             'subtotal' => $subtotal,
@@ -175,16 +170,56 @@ class CustomerController extends Controller
             'total_price' => $totalPrice,
             'special_instructions' => $request->special_instructions,
         ]);
+
+        foreach ($cartItems as $item) {
+            Order_items::create([
+                'listing_id' => $item->listing_id,
+                'order_id' => $order->id,
+                'quantity' => $item->quantity,
+                'price' => $item->listing->discountedprice,
+            ]);
+
+            $item->listing->decrement('remainingitem', $item->quantity);
+        }
         Cart::where('customer_id', $user->id)->delete();
 
-        return redirect()->route('Customer.orders.show', $order->id)
+        return redirect()->route('Customer.orders.show')
             ->with('success', 'Order placed successfully!');
     }
 
     public function showorders()
     {
         $id = Auth::id();
-        $orders = Order::where('user_id', $id)->orderBy('created_at', 'desc')->get();
+        $orders = Order::with(['restaurant', 'items.listing'])
+            ->where('user_id', $id)
+            ->orderBy('created_at', 'desc')
+            ->get();
         return view('Customer.orders', compact('orders'));
+    }
+
+    public function submitReview(Request $request)
+    {
+        try {
+            $request->validate([
+                'order_id' => 'required|exists:orders,id',
+                'rating' => 'required|in:0,1,2,3,4,5',
+            ]);
+
+            $order = Order::findOrFail($request->order_id);
+
+            // Ensure the order belongs to the authenticated user
+            if ($order->user_id !== Auth::id()) {
+                return redirect()->back()->with('error', 'Unauthorized action.');
+            }
+
+            $order->review = $request->rating;
+            $order->review_status = 'Reviewed';
+            $order->save();
+
+            return response()->json(['success', 'Review submitted successfully!']);
+        } catch (\Throwable $e) {
+            \Log::error($e);
+            return response()->json(['success' => false, 'message' => 'Server Error'], 500);
+        }
     }
 }

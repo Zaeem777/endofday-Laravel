@@ -75,8 +75,6 @@
                 <a href="/Customer/restaurants" class="block px-4 py-2 rounded hover:bg-blue-100">🍽️ Browse
                     Restaurants</a>
                 <a href="/Customer/showorders" class="block px-4 py-2 rounded hover:bg-blue-100">🛒 My Orders</a>
-                <a href="/Customer/favorites" class="block px-4 py-2 rounded hover:bg-blue-100">❤️ Favorites</a>
-                <a href="/Customer/reviews" class="block px-4 py-2 rounded hover:bg-blue-100">⭐ My Reviews</a>
                 <a href="/Customer/profile" class="block px-4 py-2 rounded hover:bg-blue-100">👤 Profile</a>
             </nav>
         </div>
@@ -121,7 +119,6 @@
             }, 3000);
         }
 
-        // Update cart
         function updateCart(itemId, delta) {
             const qtyEl = document.getElementById(`qty-${itemId}`);
             if (!qtyEl) return;
@@ -146,12 +143,18 @@
                 body: JSON.stringify({ quantity: newQty })
             })
                 .then(async res => {
-                    if (!res.ok) throw new Error(await res.text());
-                    return res.json();
+                    const data = await res.json().catch(() => ({}));
+                    if (!res.ok) {
+                        // 🧩 NEW: Display backend error (like stock limit)
+                        const msg = data.message || 'Could not update cart.';
+                        throw new Error(msg);
+                    }
+                    return data;
                 })
                 .then(data => {
                     if (!data || !data.success) {
-                        showToast("Could not update cart.", "error");
+                        // 🧩 NEW: Show backend-provided message if available
+                        showToast(data.message || "Could not update cart.", "error");
                         return;
                     }
 
@@ -167,7 +170,8 @@
                 })
                 .catch(err => {
                     console.error('Update cart failed', err);
-                    showToast("Could not update cart. Try again.", "error");
+                    // 🧩 NEW: Display actual backend error message
+                    showToast(err.message || "Could not update cart. Try again.", "error");
                 })
                 .finally(() => {
                     if (incBtn) incBtn.disabled = false;
@@ -177,11 +181,12 @@
 
         // Add to cart
         function addToCart(listingId) {
-            fetch(`/cart`, {
+            fetch('/cart', {
                 method: "POST",
                 headers: {
                     "X-CSRF-TOKEN": "{{ csrf_token() }}",
-                    "Accept": "application/json"
+                    "Accept": "application/json",
+                    "Content-Type": "application/x-www-form-urlencoded"
                 },
                 body: new URLSearchParams({
                     listing_id: listingId,
@@ -190,16 +195,46 @@
             })
                 .then(res => res.json())
                 .then(data => {
-                    if (!data.success) {
-                        showToast("Could not add item.", "error");
+                    // 🧩 CASE 1: Restaurant conflict detected
+                    if (data.conflict) {
+                        if (confirm(data.message)) {
+                            fetch(`/cart/clear`, {
+                                method: "DELETE",
+                                headers: {
+                                    "X-CSRF-TOKEN": "{{ csrf_token() }}",
+                                    "Accept": "application/json",
+                                    "X-Requested-With": "XMLHttpRequest",
+                                }
+                            })
+                                .then(res => res.json())
+                                .then(clearData => {
+                                    if (clearData.success) {
+                                        addToCart(listingId);
+                                    } else {
+                                        showToast("Failed to clear cart.", "error");
+                                    }
+                                })
+                                .catch(err => {
+                                    console.error("Cart clear error:", err);
+                                    showToast("Could not clear cart.", "error");
+                                });
+                        }
                         return;
                     }
 
+                    // 🧩 CASE 2: Add failed (including stock limit)
+                    if (!data.success) {
+                        // 🧩 NEW: Show backend message like “Only 2 items remaining”
+                        showToast(data.message || "Could not add item.", "error");
+                        return;
+                    }
+
+                    // 🧩 CASE 3: Successfully added to cart
                     let countEl = document.querySelector('[data-cart-count]');
                     if (countEl) countEl.textContent = data.cartCount;
 
                     let cartDropdown = document.querySelector('[data-cart-items]');
-                    if (cartDropdown) cartDropdown.innerHTML = data.cartItems;
+                    if (cartDropdown && data.cartItems) cartDropdown.innerHTML = data.cartItems;
 
                     let cartTotalEl = document.getElementById('cartTotal');
                     if (cartTotalEl) cartTotalEl.innerText = 'Total: ' + data.cartTotal + ' PKR';
@@ -208,9 +243,11 @@
                 })
                 .catch(err => {
                     console.error("Add to cart error:", err);
-                    showToast("Could not add item.", "error");
+                    // 🧩 NEW: Show backend error messages if available
+                    showToast(err.message || "Could not add item.", "error");
                 });
         }
+
     </script>
     <script>
         async function deleteCartItem(id) {
@@ -231,39 +268,41 @@
                     return;
                 }
 
-                // ✅ Remove the item row
-                let itemRow = document.getElementById(`itemTotal-${id}`)?.closest('.flex');
+                // ✅ Remove the item from the dropdown using the unique wrapper
+                const itemRow = document.getElementById(`cart-item-${id}`);
                 if (itemRow) itemRow.remove();
 
-                // ✅ Update cart badge
-                let countEl = document.querySelector('[data-cart-count]');
+                // ✅ Update cart badge count
+                const countEl = document.querySelector('[data-cart-count]');
                 if (countEl) countEl.textContent = data.cartCount;
 
-                // ✅ Update cart dropdown HTML if your controller returns partial
-                let cartDropdown = document.querySelector('[data-cart-items]');
-                if (cartDropdown && data.cartItems) {
-                    cartDropdown.innerHTML = data.cartItems;
-                }
-
-                // ✅ Update total
-                let cartTotalEl = document.getElementById('cartTotal');
+                // ✅ Update cart total
+                const cartTotalEl = document.getElementById('cartTotal');
                 if (cartTotalEl) {
                     cartTotalEl.innerText = 'Total: ' + data.cartTotal + ' PKR';
                 }
 
-                // ✅ Show toaster
-                showToast(data.message || "Item removed from cart!", "success");
+                // ✅ Disable Checkout if cart empty
+                const checkoutBtn = document.getElementById('checkoutBtn');
+                if (checkoutBtn) {
+                    checkoutBtn.disabled = (parseInt(data.cartCount) || 0) === 0;
+                }
 
-                // ✅ If cart empty, show message
+                // ✅ If empty, show placeholder
+                const cartDropdown = document.querySelector('[data-cart-items]');
                 if (data.cartCount === 0 && cartDropdown) {
                     cartDropdown.innerHTML = `<p class="text-gray-500 text-center py-6">Your cart is empty 🛒</p>`;
                 }
+
+                // ✅ Success toast
+                showToast(data.message || "Item removed from cart!", "success");
 
             } catch (err) {
                 console.error("Delete cart error:", err);
                 showToast("Could not remove item. Try again.", "error");
             }
         }
+
     </script>
 
 

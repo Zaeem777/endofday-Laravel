@@ -17,13 +17,15 @@ return new class extends Migration
             $table->foreignId('restaurant_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('address_id')->constrained('addresses')->onDelete('cascade');
             // $table->json('listing_ids')->nullable();
-            $table->enum('status', ['pending', 'inprocess', 'ready', 'cancelled'])
+            $table->enum('status', ['pending', 'inprocess', 'ready', 'completed', 'cancelled'])
                 ->default('pending');
             $table->string('payment_status')->default('unpaid');
             $table->decimal('subtotal', 10, 2)->default(0);
             $table->decimal('delivery_fee', 10, 2)->default(0);
             $table->decimal('total_price', 10, 2)->default(0);
             $table->text('special_instructions')->nullable();
+            $table->enum('review_status', ['Not Reviewed', 'Reviewed'])->default('Not Reviewed');
+            $table->enum('review', ['0', '1', '2', '3', '4', '5'])->default('0');
             $table->timestamps();
         });
     }

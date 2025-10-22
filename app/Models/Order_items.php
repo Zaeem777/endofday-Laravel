@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Listings;
 
 class Order_items extends Model
 {
@@ -15,13 +16,16 @@ class Order_items extends Model
         'price',
     ];
 
-    public function items()
+    public function order()
     {
         return $this->belongsTo(Order::class, 'order_id');
     }
 
     public function listing()
     {
-        return $this->has(Listings::class, 'listing_id');
+        return $this->belongsTo(
+            Listings::class,
+            'listing_id'
+        );
     }
 }
