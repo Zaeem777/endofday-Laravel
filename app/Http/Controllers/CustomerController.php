@@ -190,12 +190,16 @@ class CustomerController extends Controller
     public function showorders()
     {
         $id = Auth::id();
-        $orders = Order::with(['restaurant', 'items.listing'])
+        $orders = Order::with(['user',  'items.listing.owner'])
             ->where('user_id', $id)
             ->orderBy('created_at', 'desc')
             ->get();
+
+        // dd('', $orders);
         return view('Customer.orders', compact('orders'));
     }
+
+
 
     public function submitReview(Request $request)
     {

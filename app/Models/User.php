@@ -18,7 +18,7 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
-         'name',
+        'name',
         'email',
         'phone',
         'address',
@@ -51,28 +51,28 @@ class User extends Authenticatable
     // }
 
     public function listings()
-{
-    if ($this->role !== 'restaurant_owner') {
-        return $this->hasMany(Listings::class, 'bakery_id')->whereRaw('1=0'); 
-        // always empty if not owner
-    }
+    {
+        if ($this->role !== 'restaurant_owner') {
+            return $this->hasMany(Listings::class, 'bakery_id')->whereRaw('1=0');
+            // always empty if not owner
+        }
 
-    return $this->hasMany(Listings::class, 'bakery_id');
-}
+        return $this->hasMany(Listings::class, 'bakery_id');
+    }
 
     public function carts()
     {
         if ($this->role !== 'customer') {
-            return $this->hasMany(cart::class, 'customer_id')->whereRaw('1=0'); 
+            return $this->hasMany(cart::class, 'customer_id')->whereRaw('1=0');
             // always empty if not customer
-        }   
+        }
         return $this->hasMany(cart::class, 'customer_id');
     }
 
     public function addresses()
     {
         if ($this->role == 'customer') {
-        return $this->hasMany(Address::class);
+            return $this->hasMany(Address::class);
+        }
     }
-}
 }

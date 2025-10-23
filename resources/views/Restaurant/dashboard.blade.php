@@ -3,7 +3,19 @@
         <!-- Page Heading -->
         <div class="max-w-7xl mx-auto px-4 py-8 flex items-center justify-between">
             <div>
-                <h1 class="text-3xl font-bold text-gray-800">🍽️ Restaurant Dashboard</h1>
+                <h1 class="text-3xl font-bold text-gray-800 flex items-center gap-3">
+                    🍽️ Restaurant Dashboard
+                    @if($averageReview > 0)
+                        <span class="text-yellow-500 text-2xl">
+                            ★
+                        </span>
+                        <span class="text-gray-700 text-lg font-semibold">
+                            {{ number_format($averageReview, 1) }}/5
+                        </span>
+                    @else
+                        <span class="text-gray-500 text-sm ml-2">(No reviews yet)</span>
+                    @endif
+                </h1>
                 <p class="text-gray-600">Welcome back, here’s an overview of your restaurant.</p>
             </div>
 

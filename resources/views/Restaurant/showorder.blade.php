@@ -97,6 +97,20 @@
                     </div>
 
                 </div>
+                <div class="p-6 grid grid-cols-1 sm:grid-cols-1">
+                    <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Special Instructions</h3>
+                    <div class="mt-3 bg-gray-50 border border-gray-200 rounded-lg p-4">
+                        @if($order->special_instructions)
+
+                            <p class="text-gray-800 font-medium mt-2">{{ $order->special_instructions}}</p>
+
+                        @else
+                            <p class="text-gray-800 font-medium mt-2">No Special Instructions</p>
+
+                        @endif
+
+                    </div>
+                </div>
             </div>
 
             <!-- Ordered Items -->
@@ -123,9 +137,11 @@
                                     <td class="px-6 py-4 font-medium text-gray-900">{{ $item->listing->name ?? 'N/A' }}</td>
                                     <td class="px-6 py-4">{{ $item->listing->category ?? 'N/A' }}</td>
                                     <td class="px-6 py-4 text-center">{{ $item->quantity }}</td>
-                                    <td class="px-6 py-4 text-right">₨ {{ number_format($item->listing->price, 0) }}</td>
+                                    <td class="px-6 py-4 text-right">₨
+                                        {{ number_format($item->listing->discountedprice, 0) }}
+                                    </td>
                                     <td class="px-6 py-4 text-right font-semibold">
-                                        ₨ {{ number_format($item->quantity * $item->listing->price, 0) }}
+                                        ₨ {{ number_format($item->quantity * $item->listing->discountedprice, 0) }}
                                     </td>
                                 </tr>
                             @endforeach

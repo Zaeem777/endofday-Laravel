@@ -170,14 +170,6 @@ class RestaurantController extends Controller
         return redirect()->route('Restaurant.showlistings')->with('success', 'Listing updated successfully!');
     }
 
-    // //dashboard stats
-    // public function stats($id)
-    // {
-
-    //     return view('Restaurant.dashboard', compact('listing', 'order', 'revenue', 'pending_orders'));
-    // }
-
-
     public function viewRestaurantDashboard()
     {
         $id = Auth::id();
@@ -189,6 +181,7 @@ class RestaurantController extends Controller
         $recentOrders = Order::with(['user', 'items'])
             ->where('restaurant_id', $id)
             ->where('created_at', '>=', Carbon::now()->subDay())
+            ->orderBy('id', 'asc')
             ->get();
 
         // Revenue from completed orders
@@ -201,11 +194,19 @@ class RestaurantController extends Controller
             ->where('status', 'pending')
             ->count();
 
+        $averageReview = Order::where('restaurant_id', $id)
+            ->where('review_status', 'Reviewed')
+            ->selectRaw('AVG(CAST(review AS INT)) as avg_review')
+            ->value('avg_review');
+
+        $averageReview = round($averageReview ?? 0,);
+
         return view('Restaurant.dashboard', [
             'totalListings' => $totalListings,
             'recentOrders' => $recentOrders,
             'revenue' => $revenue,
             'pendingOrders' => $pendingOrders,
+            'averageReview' => $averageReview
         ]);
     }
 
@@ -264,5 +265,17 @@ class RestaurantController extends Controller
     {
         $order = Order::with(['items.listing', 'user', 'address'])->findOrFail($id);
         return view('Restaurant.showorder', compact('order'));
+    }
+
+    public function allorders()
+    {
+        $restaurantId = Auth::id();
+
+        $orders = Order::with(['items.listing', 'user', 'address'])
+            ->where('restaurant_id', $restaurantId)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return view('Restaurant.allorders', compact('orders'));
     }
 };

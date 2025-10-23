@@ -19,8 +19,9 @@ class Order extends Model
         'delivery_fee',
         'total_price',
         'special_instructions',
+        'review_status',
+        'review',
     ];
-
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');

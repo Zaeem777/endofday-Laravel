@@ -49,6 +49,7 @@ Route::middleware([RestaurantOwnerMiddleware::class])->group(function () {
     Route::get('/Restaurant/chartdata', [RestaurantController::class, 'getChartData'])->name('Restaurant.chartdata');
     Route::get('/Restaurant/orderDetail/{id}', [RestaurantController::class, 'showorder'])->name('Restaurant.show.order');
     Route::patch('/orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.updateStatus');
+    Route::get('/Restaurant/allorders', [RestaurantController::class, 'allorders'])->name('Restaurant.allorders');
 });
 
 //View, Edit Restaurant Profile
