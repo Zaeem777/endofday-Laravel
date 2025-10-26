@@ -56,7 +56,7 @@
 
         <!-- Remember / Forgot -->
         <div class="flex items-center justify-between text-sm text-gray-600">
-          <a href="#" class="text-purple-700 font-medium hover:underline">Forgot password?</a>
+          <a href="/forgotpassword" class="text-purple-700 font-medium hover:underline">Forgot password?</a>
         </div>
 
         <!-- Submit -->

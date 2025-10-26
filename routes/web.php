@@ -40,6 +40,16 @@ Route::post('/login', [LoginController::class, 'login']);
 //logout page 
 Route::post('/logout', [App\Http\Controllers\Auth\LoginController::class, 'logout'])->name('logout');
 
+//forgot password page
+Route::get('/forgotpassword', [LoginController::class, 'showforgotpassword'])->name('password.request');
+
+Route::post('/forgotpassword', [LoginController::class, 'forgotpassword'])->name('forgotpassword');
+
+//update password page 
+Route::get('/reset-password/{token}', [LoginController::class, 'showupdatepassword'])
+    ->name('password.reset');
+
+Route::post('/resetpassword', [LoginController::class, 'resetpassword'])->name('resetpassword');
 
 //All Restaurant Routes
 

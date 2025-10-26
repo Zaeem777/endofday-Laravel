@@ -59,60 +59,72 @@
         <div class="max-w-7xl mx-auto px-4 mt-8">
             <div class="bg-white shadow rounded-xl p-6">
                 <h2 class="text-lg font-semibold text-gray-800">Recent Orders</h2>
-                <div class="mt-4 overflow-x-auto">
-                    <table class="min-w-full text-left text-sm text-gray-600">
-                        <thead>
-                            <tr class="border-b text-gray-800">
-                                <th class="px-4 py-2">Order ID</th>
-                                <th class="px-4 py-2">Customer</th>
-                                <th class="px-4 py-2">Items</th>
-                                <th class="px-4 py-2">Total</th>
-                                <th class="px-4 py-2">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($recentOrders as $order)
-                                <tr class="border-b">
-                                    <td class="px-4 py-2">
-                                        <a href="{{ route('Restaurant.show.order', $order->id) }}"
-                                            class="text-blue-600 hover:underline font-semibold">
-                                            #{{ $order->id }}
-                                        </a>
-                                    </td>
+                @if($recentOrders->count() > 0)
+                    <div class="mt-4 overflow-x-auto">
 
-                                    {{-- Customer name from user relation --}}
-                                    <td class="px-4 py-2">
-                                        {{ $order->user->name ?? 'Guest' }}
-                                    </td>
-
-                                    {{-- Total quantity from items relation --}}
-                                    <td class="px-4 py-2">
-                                        {{ $order->items->sum('quantity') }}
-                                    </td>
-
-                                    {{-- Total price --}}
-                                    <td class="px-4 py-2">₨ {{ number_format($order->total_price, 0) }}</td>
-
-                                    {{-- Status --}}
-                                    <td class="px-4 py-2">
-                                        @php
-                                            $statusColors = [
-                                                'completed' => 'green',
-                                                'pending' => 'yellow',
-                                                'in progress' => 'blue'
-                                            ];
-                                            $color = $statusColors[strtolower($order->status)] ?? 'gray';
-                                        @endphp
-                                        <span class="px-2 py-1 text-xs bg-{{ $color }}-100 text-{{ $color }}-700 rounded">
-                                            {{ ucfirst($order->status) }}
-                                        </span>
-                                    </td>
+                        <table class="min-w-full text-left text-sm text-gray-600">
+                            <thead>
+                                <tr class="border-b text-gray-800">
+                                    <th class="px-4 py-2">Order ID</th>
+                                    <th class="px-4 py-2">Customer</th>
+                                    <th class="px-4 py-2">Items</th>
+                                    <th class="px-4 py-2">Total</th>
+                                    <th class="px-4 py-2">Status</th>
                                 </tr>
-                            @endforeach
-                        </tbody>
+                            </thead>
+                            <tbody>
+                                @foreach($recentOrders as $order)
+                                    <tr class="border-b">
+                                        <td class="px-4 py-2">
+                                            <a href="{{ route('Restaurant.show.order', $order->id) }}"
+                                                class="text-blue-600 hover:underline font-semibold">
+                                                #{{ $order->id }}
+                                            </a>
+                                        </td>
 
-                    </table>
-                </div>
+                                        {{-- Customer name from user relation --}}
+                                        <td class="px-4 py-2">
+                                            {{ $order->user->name ?? 'Guest' }}
+                                        </td>
+
+                                        {{-- Total quantity from items relation --}}
+                                        <td class="px-4 py-2">
+                                            {{ $order->items->sum('quantity') }}
+                                        </td>
+
+                                        {{-- Total price --}}
+                                        <td class="px-4 py-2">₨ {{ number_format($order->total_price, 0) }}</td>
+
+                                        {{-- Status --}}
+                                        <td class="px-4 py-2">
+                                            @php
+                                                $statusColors = [
+                                                    'completed' => 'green',
+                                                    'pending' => 'yellow',
+                                                    'in progress' => 'blue'
+                                                ];
+                                                $color = $statusColors[strtolower($order->status)] ?? 'gray';
+                                            @endphp
+                                            <span class="px-2 py-1 text-xs bg-{{ $color }}-100 text-{{ $color }}-700 rounded">
+                                                {{ ucfirst($order->status) }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+
+                        </table>
+                    </div>
+                @else
+                    <div class="mt-6 flex flex-col items-center justify-center text-center py-10">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-14 w-14 text-gray-400 mb-3" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                d="M9 12h6m2 0a8 8 0 11-16 0 8 8 0 0116 0z" />
+                        </svg>
+                        <p class="text-gray-500 text-lg font-medium">No orders have been placed in the last 24 hours.</p>
+                    </div>
+                @endif
             </div>
         </div>
 
