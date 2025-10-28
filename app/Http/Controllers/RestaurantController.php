@@ -210,23 +210,87 @@ class RestaurantController extends Controller
         ]);
     }
 
+    // public function getChartData()
+    // {
+    //     $restaurantId = Auth::id();
+
+    //     // === Weekly Sales Data ===
+    //     // Postgres does not support DAYNAME(), use TO_CHAR() instead
+    //     $salesData = Order::where('restaurant_id', $restaurantId)
+    //         ->where('created_at', '>=', Carbon::now()->subDays(7))
+    //         ->selectRaw("TO_CHAR(created_at, 'Day') as day, SUM(total_price) as total")
+    //         ->groupBy('day')
+    //         ->pluck('total', 'day');
+
+    //     // Normalize weekday names and remove trailing spaces (Postgres pads 'Day' output)
+    //     $cleanSales = [];
+    //     $allDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+    //     foreach ($allDays as $day) {
+    //         $found = null;
+    //         foreach ($salesData as $key => $value) {
+    //             if (trim($key) === $day) {
+    //                 $found = $value;
+    //                 break;
+    //             }
+    //         }
+    //         $cleanSales[] = $found ?? 0;
+    //     }
+
+    //     // === Top Categories ===
+    //     $categoryData = Order_items::whereHas('order', function ($query) use ($restaurantId) {
+    //         $query->where('restaurant_id', $restaurantId);
+    //     })
+    //         ->with('listing')
+    //         ->get()
+    //         ->groupBy(fn($item) => $item->listing->category ?? 'Uncategorized')
+    //         ->map(fn($group) => $group->sum('quantity'))
+    //         ->sortDesc()
+    //         ->take(5);
+
+    //     // === JSON Response ===
+    //     return response()->json([
+    //         'sales' => [
+    //             'labels' => $allDays,
+    //             'data' => array_values($cleanSales),
+    //         ],
+    //         'categories' => [
+    //             'labels' => $categoryData->keys(),
+    //             'data' => $categoryData->values(),
+    //         ],
+    //     ]);
+    // }
+
+
+
     public function getChartData()
     {
         $restaurantId = Auth::id();
 
-        // === Weekly Sales Data ===
-        // Postgres does not support DAYNAME(), use TO_CHAR() instead
+        // === Weekly Sales Data (exclude cancelled orders) ===
         $salesData = Order::where('restaurant_id', $restaurantId)
-            ->where('created_at', '>=', Carbon::now()->subDays(7))
+            ->where('created_at', '>=', Carbon::now()->subDays(6)->startOfDay()) // last 7 days including today
+            ->where('status', '=', 'completed')
             ->selectRaw("TO_CHAR(created_at, 'Day') as day, SUM(total_price) as total")
             ->groupBy('day')
             ->pluck('total', 'day');
 
-        // Normalize weekday names and remove trailing spaces (Postgres pads 'Day' output)
-        $cleanSales = [];
+        // === Build dynamic day order ===
         $allDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
-        foreach ($allDays as $day) {
+        // Find today
+        $today = Carbon::now()->format('l'); // e.g. "Wednesday"
+
+        // Reorder days so today is at the END (and 6 previous days come before)
+        $todayIndex = array_search($today, $allDays);
+        $orderedDays = array_merge(
+            array_slice($allDays, $todayIndex + 1), // days after today
+            array_slice($allDays, 0, $todayIndex + 1) // up to today
+        );
+
+        // Normalize data (trim spaces from Postgres TO_CHAR output)
+        $cleanSales = [];
+        foreach ($orderedDays as $day) {
             $found = null;
             foreach ($salesData as $key => $value) {
                 if (trim($key) === $day) {
@@ -237,9 +301,10 @@ class RestaurantController extends Controller
             $cleanSales[] = $found ?? 0;
         }
 
-        // === Top Categories ===
+        // === Top Categories (exclude cancelled orders) ===
         $categoryData = Order_items::whereHas('order', function ($query) use ($restaurantId) {
-            $query->where('restaurant_id', $restaurantId);
+            $query->where('restaurant_id', $restaurantId)
+                ->where('status', '!=', 'cancelled');
         })
             ->with('listing')
             ->get()
@@ -251,7 +316,7 @@ class RestaurantController extends Controller
         // === JSON Response ===
         return response()->json([
             'sales' => [
-                'labels' => $allDays,
+                'labels' => $orderedDays,
                 'data' => array_values($cleanSales),
             ],
             'categories' => [
@@ -267,15 +332,29 @@ class RestaurantController extends Controller
         return view('Restaurant.showorder', compact('order'));
     }
 
-    public function allorders()
+    public function allorders(Request $request)
     {
         $restaurantId = Auth::id();
+        $status = $request->get('status');
 
-        $orders = Order::with(['items.listing', 'user', 'address'])
+        $ordersQuery = Order::with(['items.listing', 'user', 'address'])
             ->where('restaurant_id', $restaurantId)
-            ->orderBy('created_at', 'desc')
-            ->get();
+            ->orderBy('created_at', 'desc');
 
-        return view('Restaurant.allorders', compact('orders'));
+        if ($status && $status !== 'all') {
+            $ordersQuery->where('status', $status);
+        }
+
+        $orders = $ordersQuery->get();
+
+        $statuses = Order::select('status')
+            ->where('restaurant_id', $restaurantId)
+            ->distinct()
+            ->pluck('status');
+        return view('Restaurant.allorders', compact(
+            'orders',
+            'statuses',
+            'status'
+        ));
     }
 };

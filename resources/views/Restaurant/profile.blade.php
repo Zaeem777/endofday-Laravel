@@ -1,6 +1,6 @@
 <x-layout>
 <div 
-    class="max-w-2xl mx-4 sm:mx-auto mt-16 bg-white/90 backdrop-blur-md shadow-2xl rounded-2xl border border-gray-100 overflow-hidden text-gray-900 transition-all duration-300"
+    class="max-w-2xl mx-4 sm:mx-auto mt-5 bg-white/90 backdrop-blur-md shadow-2xl rounded-2xl border border-gray-100 overflow-hidden text-gray-900 transition-all duration-300"
     x-data="{ editMode: {{ $errors->any() ? 'true' : 'false' }} }">
 
     <!-- Cover Image -->

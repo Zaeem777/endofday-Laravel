@@ -193,12 +193,32 @@ class CustomerController extends Controller
         $orders = Order::with(['user',  'items.listing.owner'])
             ->where('user_id', $id)
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->get()
+            ->map(function ($order) {
+                $order->cancel = $order->created_at >= now()->subMinutes(10);
+                return $order;
+            });
 
         // dd('', $orders);
         return view('Customer.orders', compact('orders'));
     }
 
+    public function cancel(Order $order)
+    {
+
+        if ($order->created_at < now()->subMinutes(10)) {
+            return response()->json(['success' => false, 'message' => 'Order can no longer be cancelled.']);
+        }
+
+        if (in_array($order->status, ['completed', 'cancelled'])) {
+            return response()->json(['success' => false, 'message' => 'This order cannot be cancelled.']);
+        }
+
+        $order->status = 'cancelled';
+        $order->save();
+
+        return response()->json(['success' => true, 'message' => 'Order has been cancelled successfully.']);
+    }
 
 
     public function submitReview(Request $request)
@@ -213,17 +233,25 @@ class CustomerController extends Controller
 
             // Ensure the order belongs to the authenticated user
             if ($order->user_id !== Auth::id()) {
-                return redirect()->back()->with('error', 'Unauthorized action.');
+                // return redirect()->back()->with('error', 'Unauthorized action.');
+                return response()->json(['success' => false, 'message' => 'Unauthorized Action.'], 403);
             }
 
             $order->review = $request->rating;
             $order->review_status = 'Reviewed';
             $order->save();
 
-            return response()->json(['success', 'Review submitted successfully!']);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Review submitted successfully!',
+            ]);
         } catch (\Throwable $e) {
             \Log::error($e);
-            return response()->json(['success' => false, 'message' => 'Server Error'], 500);
+            return response()->json([
+                'success' => false,
+                'message' => 'Server Error: ' . $e->getMessage(),
+            ], 500);
         }
     }
 }

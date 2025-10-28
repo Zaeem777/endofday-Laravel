@@ -23,8 +23,9 @@
                                 <img src="{{ asset('storage/' . $restaurant->image) }}" alt="{{ $restaurant->name }}"
                                     class="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-110">
                             @else
-                                <div class="w-full h-48 bg-gray-200 flex items-center justify-center text-gray-500">
-                                    No Image
+                                <div>
+                                    <img src="{{ asset('storage/no-image.jpg') }}" alt="No image available"
+                                        class="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-110">
                                 </div>
                             @endif
 

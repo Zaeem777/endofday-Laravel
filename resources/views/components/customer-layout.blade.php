@@ -11,7 +11,7 @@
     <title>{{ $title ?? 'Customer Dashboard' }}</title>
 </head>
 
-<body class="bg-gradient-to-br from-blue-100 via-white to-green-100 min-h-screen flex flex-col"
+<body class="bg-gradient-to-br from-purple-100 via-white to-green-100 min-h-screen flex flex-col"
     x-data="{ sidebarOpen: false }">
 
     <!-- Navbar -->
@@ -23,14 +23,14 @@
                 <div class="flex items-center">
                     <!-- Sidebar Toggle Button -->
                     <button @click="sidebarOpen = !sidebarOpen"
-                        class="text-gray-600 hover:text-blue-600 focus:outline-none">
+                        class="text-gray-600 hover:text-purple-600 focus:outline-none">
                         <!-- Hamburger Icon -->
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"></path>
                         </svg>
                     </button>
 
-                    <a href="/Customer/dashboard" class="ml-3 font-bold text-blue-700 text-lg">Customer Dashboard</a>
+                    <a href="/Customer/dashboard" class="ml-3 font-bold text-purple-700 text-lg">Customer Dashboard</a>
                 </div>
 
                 <!-- Right Side -->
@@ -44,7 +44,7 @@
                     <form action="/logout" method="POST">
                         @csrf
                         <button type="submit"
-                            class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+                            class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition">
                             Logout
                         </button>
                     </form>
@@ -65,17 +65,18 @@
             class="fixed inset-y-0 left-0 w-64 bg-white shadow-md z-30 flex flex-col">
 
             <div class="p-4 border-b flex justify-between items-center">
-                <h2 class="text-lg font-semibold text-blue-700">Menu</h2>
+                <h2 class="text-lg font-semibold text-purple-700">Menu</h2>
                 <button @click="sidebarOpen = false" class="text-gray-500 hover:text-red-600">
                     ✖
                 </button>
             </div>
 
             <nav class="flex-1 p-4 space-y-2">
-                <a href="/Customer/restaurants" class="block px-4 py-2 rounded hover:bg-blue-100">🍽️ Browse
+                <a href="/Customer/restaurants" class="block px-4 py-2 rounded hover:bg-purple-100">🍽️ Browse
                     Restaurants</a>
-                <a href="/Customer/showorders" class="block px-4 py-2 rounded hover:bg-blue-100">🛒 My Orders</a>
-                <a href="/Customer/profile" class="block px-4 py-2 rounded hover:bg-blue-100">👤 Profile</a>
+                <a href="/Customer/showorders" class="block px-4 py-2 rounded hover:bg-purple-100">🛒 My Orders</a>
+                <a href="/Customer/profile" class="block px-4 py-2 rounded hover:bg-purple-100">👤 Profile</a>
+                <a href="/contact" class="block px-4 py-2 rounded hover:bg-purple-100">📞 Contact Us</a>
             </nav>
         </div>
 

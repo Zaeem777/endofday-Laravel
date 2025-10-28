@@ -71,6 +71,7 @@
                 <a href="/Restaurant/allorders" class="block px-4 py-2 rounded hover:bg-purple-100">🛒 All Orders</a>
                 {{-- <a href="/orders" class="block px-4 py-2 rounded hover:bg-purple-100">🌟 Reviews</a> --}}
                 <a href="/Restaurant/profile" class="block px-4 py-2 rounded hover:bg-purple-100">👤 Profile</a>
+                <a href="/contact" class="block px-4 py-2 rounded hover:bg-purple-100">📞 Contact Us</a>
             </nav>
         </div>
 

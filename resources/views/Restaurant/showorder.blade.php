@@ -7,7 +7,7 @@
                     <h1 class="text-3xl font-bold text-gray-800">🧾 Order Details</h1>
                 </div>
                 <a href="{{ route('Restaurant.dashboard') }}"
-                    class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg shadow hover:bg-blue-700 transition">
+                    class="inline-flex items-center px-4 py-2 bg-purple-600 text-white text-sm font-semibold rounded-lg shadow hover:bg-purple-700 transition">
                     ← Back to Dashboard
                 </a>
             </div>
@@ -27,7 +27,7 @@
                             'completed' => 'green',
                             'pending' => 'yellow',
                             'in process' => 'purple',
-                            'ready' => 'blue',
+                            'ready' => 'purple',
                             'cancelled' => 'red',
 
                         ];
@@ -39,7 +39,7 @@
                         @method('PATCH')
 
                         <select name="status"
-                            class="px-3 py-1 text-sm rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-700">
+                            class="px-3 py-1 text-sm rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-gray-700">
                             <option value="pending" {{ $order->status === 'pending' ? 'selected' : '' }}>Pending</option>
                             <option value="inprocess" {{ $order->status === 'inprocess' ? 'selected' : '' }}>In
                                 Process</option>
@@ -52,7 +52,7 @@
                         </select>
 
                         <button type="submit"
-                            class="px-4 py-1 bg-blue-600 text-white text-sm font-medium rounded-lg shadow hover:bg-blue-700 transition">
+                            class="px-4 py-1 bg-purple-600 text-white text-sm font-medium rounded-lg shadow hover:bg-purple-700 transition">
                             Update
                         </button>
                     </form>
@@ -146,14 +146,23 @@
                                 </tr>
                             @endforeach
                         </tbody>
-                        <tfoot class="bg-gray-50">
+                        <tfoot class="bg-gray-50 font-semibold text-gray-700">
                             <tr>
-                                <td colspan="4" class="px-6 py-4 text-right font-semibold text-gray-700">Total:</td>
-                                <td class="px-6 py-4 text-right font-bold text-green-600">
-                                    ₨ {{ number_format($order->total_price, 0) }}
+                                <!-- Left-most: Delivery Fee -->
+                                <td colspan="3" class="px-6 py-4 text-left">
+                                    Delivery Fee: ₨ {{ number_format($order->delivery_fee, 0) }}
+                                </td>
+
+                                <!-- Spacer columns (optional, for layout balance) -->
+                                <td colspan="2"></td>
+
+                                <!-- Right-most: Total -->
+                                <td colspan="2" class="px-6 py-4 text-right text-green-600 font-bold">
+                                    Total: ₨ {{ number_format($order->total_price, 0) }}
                                 </td>
                             </tr>
                         </tfoot>
+
                     </table>
                 </div>
             </div>

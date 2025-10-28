@@ -131,16 +131,25 @@
         <!-- Graphs Section -->
         <div class="max-w-7xl mx-auto px-4 mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
             <!-- Sales Chart -->
-            <div class="bg-white shadow rounded-xl p-6">
+            <div class="bg-white shadow rounded-xl p-6 relative">
                 <h2 class="text-lg font-semibold text-gray-800">Sales Overview</h2>
                 <canvas id="salesChart" class="mt-4"></canvas>
+                <div id="salesChartEmpty"
+                    class="absolute inset-0 flex items-center justify-center text-gray-400 text-lg font-medium hidden">
+                    No sales data available
+                </div>
             </div>
 
             <!-- Top Categories -->
-            <div class="bg-white shadow rounded-xl p-6">
+            <div class="bg-white shadow rounded-xl p-6 relative">
                 <h2 class="text-lg font-semibold text-gray-800">Top Categories</h2>
                 <canvas id="categoryChart" class="mt-4"></canvas>
+                <div id="categoryChartEmpty"
+                    class="absolute inset-0 flex items-center justify-center text-gray-400 text-lg font-medium hidden">
+                    No category data available
+                </div>
             </div>
+
         </div>
     </div>
 
@@ -167,19 +176,44 @@
                 const response = await fetch("{{ route('Restaurant.chartdata') }}");
                 const data = await response.json();
 
-                // Update Sales Chart
-                salesChart.data.labels = data.sales.labels;
-                salesChart.data.datasets[0].data = data.sales.data;
-                salesChart.update();
+                // === Sales Chart ===
+                const hasSalesData = data.sales.data.some(value => value > 0);
+                const salesEmptyDiv = document.getElementById('salesChartEmpty');
 
-                // Update Category Chart
-                categoryChart.data.labels = data.categories.labels;
-                categoryChart.data.datasets[0].data = data.categories.data;
-                categoryChart.update();
+                if (hasSalesData) {
+                    salesChart.data.labels = data.sales.labels;
+                    salesChart.data.datasets[0].data = data.sales.data;
+                    salesChart.update();
+                    salesEmptyDiv.classList.add('hidden');
+                } else {
+                    // Clear chart and show message
+                    salesChart.data.labels = [];
+                    salesChart.data.datasets[0].data = [];
+                    salesChart.update();
+                    salesEmptyDiv.classList.remove('hidden');
+                }
+
+                // === Category Chart ===
+                const hasCategoryData = data.categories.data.length > 0;
+                const categoryEmptyDiv = document.getElementById('categoryChartEmpty');
+
+                if (hasCategoryData) {
+                    categoryChart.data.labels = data.categories.labels;
+                    categoryChart.data.datasets[0].data = data.categories.data;
+                    categoryChart.update();
+                    categoryEmptyDiv.classList.add('hidden');
+                } else {
+                    categoryChart.data.labels = [];
+                    categoryChart.data.datasets[0].data = [];
+                    categoryChart.update();
+                    categoryEmptyDiv.classList.remove('hidden');
+                }
+
             } catch (error) {
                 console.error("Error fetching chart data:", error);
             }
         }
+
 
         // Initial load + auto refresh every 10 seconds
         fetchChartData();

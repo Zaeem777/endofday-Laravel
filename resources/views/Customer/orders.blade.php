@@ -1,9 +1,11 @@
 <x-customer-layout>
+    <!-- Include SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <div class="max-w-6xl mx-auto px-6 py-12">
         <!-- Page Header -->
         <div class="flex items-center justify-between mb-10">
             <h1 class="text-4xl font-bold text-gray-900 flex items-center gap-3">
-
                 My Orders
             </h1>
         </div>
@@ -17,13 +19,14 @@
                 @foreach ($orders as $order)
                     <div x-data="{ open: false, showReview: false, rating: 0 }"
                         class="bg-white border border-gray-100 rounded-2xl shadow-md hover:shadow-xl transition duration-300 overflow-hidden">
+
                         <!-- Order Card Header -->
                         <div class="relative h-40 w-full overflow-hidden">
                             @php
                                 $firstItem = $order->items->first();
                                 $restaurantImage = $firstItem && $firstItem->listing && $firstItem->listing->owner && $firstItem->listing->owner->image
                                     ? asset('storage/' . $firstItem->listing->owner->image)
-                                    : 'https://via.placeholder.com/400x200?text=No+Image';
+                                    : Storage::url('no-image.jpg');
                             @endphp
 
                             <img src="{{ $restaurantImage }}" alt="Restaurant Image"
@@ -31,29 +34,29 @@
 
                             <div class="absolute top-3 right-3">
                                 <span class="px-3 py-1 text-xs font-semibold rounded-full
-                                                    @if($order->status === 'pending') bg-yellow-100 text-yellow-700
-                                                    @elseif($order->status === 'inprocess') bg-blue-100 text-blue-700
-                                                    @elseif($order->status === 'ready') bg-indigo-100 text-indigo-700
-                                                    @elseif($order->status === 'completed') bg-green-100 text-green-700
-                                                    @elseif($order->status === 'cancelled') bg-red-100 text-red-700
-                                                    @else bg-gray-100 text-gray-700 @endif">
+                                    @if($order->status === 'pending') bg-yellow-100 text-yellow-700
+                                    @elseif($order->status === 'inprocess') bg-blue-100 text-blue-700
+                                    @elseif($order->status === 'ready') bg-indigo-100 text-indigo-700
+                                    @elseif($order->status === 'completed') bg-green-100 text-green-700
+                                    @elseif($order->status === 'cancelled') bg-red-100 text-red-700
+                                    @else bg-gray-100 text-gray-700 @endif">
                                     {{ ucfirst($order->status) }}
                                 </span>
                             </div>
                         </div>
-
 
                         <!-- Card Content -->
                         <div class="p-6">
                             @php
                                 $firstItem = $order->items->first();
                             @endphp
+
                             <div class="flex justify-between items-start">
                                 <div>
                                     <h2 class="text-lg font-semibold text-gray-900">
                                         {{ $firstItem && $firstItem->listing && $firstItem->listing->owner
-                    ? $firstItem->listing->owner->name
-                    : 'Restaurant Deleted' }}
+                                            ? $firstItem->listing->owner->name
+                                            : 'Restaurant Deleted' }}
                                     </h2>
                                     <p class="text-sm text-gray-500 mt-1">
                                         Placed on {{ $order->created_at->format('d M Y, h:i A') }}
@@ -65,10 +68,10 @@
                             </div>
 
                             <!-- Review Button -->
-                            <div class="mt-4">
+                            <div class="mt-4 review-section">
                                 @if ($order->status === 'completed' && $order->review_status === 'Not Reviewed')
                                     <button @click="showReview = !showReview"
-                                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium">
+                                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium review-btn">
                                         Leave a Review
                                     </button>
                                 @elseif ($order->status === 'completed' && $order->review_status === 'Reviewed')
@@ -83,30 +86,60 @@
                                 <p class="text-gray-700 mb-2 font-medium">Rate your experience:</p>
                                 <div class="flex space-x-2">
                                     <template x-for="i in 5">
-                                        <svg @click="
-                                                                                            rating = i;
-                                                                                            fetch('{{ route('Customer.orders.review') }}', {
-                                                                                                method: 'POST',
-                                                                                                headers: {
-                                                                                                    'Content-Type': 'application/json',
-                                                                                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                                                                                                },
-                                                                                                body: JSON.stringify({
-                                                                                                    order_id: {{ $order->id }},
-                                                                                                    rating: i
-                                                                                                })
-                                                                                            })
-                                                                                            .then(res => res.json())
-                                                                                            .then(data => {
-                                                                                                if (data.success) {
-                                                                                                    showReview = false;
-                                                                                                    alert('⭐ Thanks for your review!');
-                                                                                                } else {
-                                                                                                    alert(data.message || 'Error submitting review.');
-                                                                                                }
-                                                                                            })
-                                                                                            .catch(err => console.error(err));
-                                                                                        "
+                                        <svg 
+                                            @click="
+                                                rating = i;
+                                                fetch('{{ route('Customer.orders.review') }}', {
+                                                    method: 'POST',
+                                                    headers: {
+                                                        'Content-Type': 'application/json',
+                                                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                                    },
+                                                    body: JSON.stringify({
+                                                        order_id: {{ $order->id }},
+                                                        rating: i
+                                                    })
+                                                })
+                                                .then(async (res) => {
+                                                    const data = await res.json().catch(() => null);
+                                                    if (!res.ok || !data) throw new Error('Invalid response');
+
+                                                    if (data.success) {
+                                                        showReview = false;
+                                                        Swal.fire({
+                                                            title: 'Thank You!',
+                                                            text: '⭐ Thanks for your review!',
+                                                            icon: 'success',
+                                                            confirmButtonColor: '#3085d6'
+                                                        }).then(()=>{
+                                                            window.location.reload();
+                                                        });
+
+                                                        // Replace button with badge instantly
+                                                        const reviewSection = $el.closest('.review-section');
+                                                        if (reviewSection) {
+                                                            reviewSection.innerHTML = `
+                                                                <span class='px-4 py-2 rounded-lg bg-green-100 text-green-700 font-semibold text-sm'>
+                                                                    Reviewed (${i} ★)
+                                                                </span>`;
+                                                        }
+                                                    } else {
+                                                        Swal.fire({
+                                                            title: 'Error',
+                                                            text: data.message || 'Error submitting review.',
+                                                            icon: 'error'
+                                                        });
+                                                    }
+                                                })
+                                                .catch(err => {
+                                                    console.error(err);
+                                                    Swal.fire({
+                                                        title: 'Error',
+                                                        text: 'Something went wrong while submitting review.',
+                                                        icon: 'error'
+                                                    });
+                                                });
+                                            "
                                             :class="i <= rating ? 'text-yellow-400' : 'text-gray-300'"
                                             class="w-8 h-8 cursor-pointer transition-transform transform hover:scale-110"
                                             fill="currentColor" viewBox="0 0 20 20">
@@ -117,29 +150,83 @@
                                 </div>
                             </div>
 
-                            <!-- Details Button -->
+                            <!-- Actions (Details + Cancel Button) -->
                             <div class="mt-6 flex justify-between items-center border-t pt-4">
                                 <button @click="open = !open"
                                     class="text-sm font-medium text-blue-700 hover:text-blue-900 transition">
                                     <span x-show="!open">See Details ↓</span>
                                     <span x-show="open">Hide Details ↑</span>
                                 </button>
+
+                                @if ($order->cancel && $order->status !== 'cancelled' && $order->status !== 'completed')
+                                    <button @click.prevent="
+                                        Swal.fire({
+                                            title: 'Cancel Order?',
+                                            text: 'Are you sure you want to cancel this order?',
+                                            icon: 'warning',
+                                            showCancelButton: true,
+                                            confirmButtonColor: '#d33',
+                                            cancelButtonColor: '#3085d6',
+                                            confirmButtonText: 'Yes, cancel it',
+                                            cancelButtonText: 'No, keep it'
+                                        }).then((result) => {
+                                            if (result.isConfirmed) {
+                                                fetch('{{ route('Customer.orders.cancel', $order->id) }}', {
+                                                    method: 'PATCH',
+                                                    headers: {
+                                                        'Content-Type': 'application/json',
+                                                        'Accept': 'application/json', 
+                                                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                                    }
+                                                })
+                                                .then(res => res.json())
+                                                .then(data => {
+                                                    if (data.success) {
+                                                        Swal.fire({
+                                                            title: 'Cancelled!',
+                                                            text: data.message,
+                                                            icon: 'success',
+                                                            confirmButtonColor: '#3085d6'
+                                                        });
+
+                                                        $el.querySelector('span').textContent = 'Cancelled';
+                                                        $el.querySelector('span').className =
+                                                            'px-3 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-700';
+                                                    } else {
+                                                        Swal.fire({
+                                                            title: 'Error',
+                                                            text: data.message || 'Error cancelling order.',
+                                                            icon: 'error'
+                                                        });
+                                                    }
+                                                })
+                                                .catch(() => {
+                                                    Swal.fire({
+                                                        title: 'Error',
+                                                        text: 'Something went wrong while cancelling.',
+                                                        icon: 'error'
+                                                    });
+                                                });
+                                            }
+                                        });
+                                    "
+                                        class="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm font-medium">
+                                        Cancel Order
+                                    </button>
+                                @endif
                             </div>
 
                             <!-- Order Details -->
                             <div x-show="open" x-collapse x-transition class="mt-4 text-sm text-gray-700 space-y-3">
                                 <div class="grid grid-cols-2 gap-2">
                                     <p><span class="font-medium">Subtotal:</span> ₨ {{ number_format($order->subtotal) }}</p>
-                                    <p><span class="font-medium">Delivery Fee:</span> ₨
-                                        {{ number_format($order->delivery_fee) }}
-                                    </p>
+                                    <p><span class="font-medium">Delivery Fee:</span> ₨ {{ number_format($order->delivery_fee) }}</p>
                                     <p><span class="font-medium">Total:</span> ₨ {{ number_format($order->total_price) }}</p>
                                     <p><span class="font-medium">Payment:</span> {{ ucfirst($order->payment_status) }}</p>
                                 </div>
-                                <p><span class="font-medium">Instructions:</span>
-                                    {{ $order->special_instructions ?? 'N/A' }}</p>
 
-                                <!-- Items List -->
+                                <p><span class="font-medium">Instructions:</span> {{ $order->special_instructions ?? 'N/A' }}</p>
+
                                 @if($order->items->count() > 0)
                                     <div>
                                         <p class="font-medium text-gray-800 mt-4 mb-2">Items</p>
@@ -147,8 +234,11 @@
                                             @foreach($order->items as $item)
                                                 <li class="flex justify-between items-center p-3 hover:bg-gray-100 transition">
                                                     <div class="flex items-center space-x-3">
-                                                        <img src="{{ $item->listing && $item->listing->image ? Storage::url($item->listing->image) : 'https://via.placeholder.com/40' }}"
+                                                        <img src="{{ $item->listing && $item->listing->image
+                                                            ? Storage::url($item->listing->image)
+                                                            : Storage::url('no-image.jpg') }}"
                                                             class="w-10 h-10 rounded-lg object-cover border">
+
                                                         <div>
                                                             <p class="font-medium">{{ $item->listing->name ?? 'Item Deleted' }}</p>
                                                             <p class="text-xs text-gray-500">Qty: {{ $item->quantity }}</p>

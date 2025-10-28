@@ -3,11 +3,32 @@
     <!-- All Orders -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-10">
         <div class="bg-white shadow-lg rounded-2xl overflow-hidden">
-            <div class="flex items-center justify-between px-6 py-4 border-b bg-gradient-to-r from-blue-50 to-blue-100">
+
+            <!-- Header + Filter -->
+            <div
+                class="flex flex-col md:flex-row md:items-center md:justify-between px-6 py-4 border-b bg-gradient-to-r from-purple-50 to-purple-100 gap-3">
+
                 <h2 class="text-xl font-bold text-gray-800">All Orders</h2>
-                <span class="text-sm text-gray-500">{{ $orders->count() }} total orders</span>
+
+                <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+                    <form method="GET" action="{{ route('Restaurant.allorders') }}" class="flex items-center space-x-2">
+                        <label for="status" class="text-sm text-gray-600 font-medium">Filter by:</label>
+                        <select name="status" id="status" onchange="this.form.submit()"
+                            class="border-gray-300 rounded-md text-sm text-gray-700 focus:ring-purple-500 focus:border-purple-500">
+                            <option value="all" {{ ($status ?? '') === 'all' || !$status ? 'selected' : '' }}>All</option>
+                            @foreach($statuses as $s)
+                                <option value="{{ $s }}" {{ ($status ?? '') === $s ? 'selected' : '' }}>
+                                    {{ ucfirst($s) }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </form>
+
+                    <span class="text-sm text-gray-500">{{ $orders->count() }} total orders</span>
+                </div>
             </div>
 
+            <!-- Orders Table -->
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
@@ -17,6 +38,7 @@
                             <th class="px-6 py-3">Items</th>
                             <th class="px-6 py-3">Total</th>
                             <th class="px-6 py-3">Status</th>
+                            <th class="px-6 py-3">Order Date</th>
                             <th class="px-6 py-3 text-right">Actions</th>
                         </tr>
                     </thead>
@@ -27,7 +49,7 @@
                                 <!-- Order ID -->
                                 <td class="px-6 py-4 whitespace-nowrap font-semibold text-gray-800">
                                     <a href="{{ route('Restaurant.show.order', $order->id) }}"
-                                        class="hover:text-blue-600 transition">
+                                        class="hover:text-purple-600 transition">
                                         #{{ $order->id }}
                                     </a>
                                 </td>
@@ -52,7 +74,7 @@
                                     @php
                                         $statusColors = [
                                             'pending' => 'bg-yellow-100 text-yellow-800',
-                                            'inprocess' => 'bg-blue-100 text-blue-800',
+                                            'inprocess' => 'bg-purple-100 text-purple-800',
                                             'ready' => 'bg-purple-100 text-purple-800',
                                             'completed' => 'bg-green-100 text-green-800',
                                             'cancelled' => 'bg-red-100 text-red-800',
@@ -64,17 +86,22 @@
                                     </span>
                                 </td>
 
+                                <!-- Order Date -->
+                                <td class="px-6 py-4 whitespace-nowrap text-gray-700">
+                                    {{ $order->created_at->format('d M Y, h:i A') }}
+                                </td>
+
                                 <!-- Actions -->
                                 <td class="px-6 py-4 whitespace-nowrap text-right">
                                     <a href="{{ route('Restaurant.show.order', $order->id) }}"
-                                        class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg shadow hover:bg-blue-700 transition">
+                                        class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-purple-600 rounded-lg shadow hover:bg-purple-700 transition">
                                         View
                                     </a>
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="px-6 py-6 text-center text-gray-500">
+                                <td colspan="7" class="px-6 py-6 text-center text-gray-500">
                                     No orders found.
                                 </td>
                             </tr>

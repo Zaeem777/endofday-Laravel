@@ -1,5 +1,5 @@
 <x-layout>
-    <div class="min-h-screen  py-10">
+    <div class="min-h-screen">
         <div
             class="max-w-3xl mx-auto bg-white/90 backdrop-blur-md shadow-2xl rounded-2xl p-10 border border-purple-100">
 
@@ -17,15 +17,6 @@
                     @method('PUT')
                 @endif
 
-                {{-- <!-- Name -->
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1">Name</label>
-                    <input type="text" name="name" value="{{ old('name', $listing->name ?? '') }}"
-                        class="w-full rounded-xl border-gray-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 p-3 text-gray-800 shadow-sm transition">
-                    @error('name')
-                    <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-                    @enderror
-                </div> --}}
                 <div class="grid grid-cols-2 gap-6">
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-1">Name</label>
@@ -100,7 +91,7 @@
                     <div class="flex items-center justify-center w-full">
                         <label
                             class="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed rounded-xl cursor-pointer hover:bg-purple-50 border-gray-300 hover:border-purple-400 transition">
-                            <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                            <div class="flex flex-col items-center justify-center pt-2 pb-6">
                                 <svg class="w-8 h-8 mb-2 text-purple-600" fill="none" stroke="currentColor"
                                     stroke-width="2" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round"
@@ -117,7 +108,7 @@
                 </div>
 
                 <!-- Submit Button -->
-                <div class="pt-6 text-center">
+                <div class="pt-2 text-center">
                     <button type="submit"
                         class="px-8 py-3 bg-purple-600 text-white font-semibold rounded-full shadow-lg hover:bg-purple-700 hover:shadow-xl transition-all duration-300">
                         {{ isset($listing) ? 'Update Listing' : 'Add Listing' }}

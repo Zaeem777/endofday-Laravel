@@ -24,8 +24,9 @@
                                     alt="{{ $listing->name }}"
                                     class="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-300">
                             @else
-                                <div class="w-full h-48 bg-gray-100 flex items-center justify-center text-gray-400">
-                                    No Image
+                                 <div>
+                                    <img src="{{ asset('storage/no-image.jpg') }}" alt="No image available"
+                                        class="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-110">
                                 </div>
                             @endif
 

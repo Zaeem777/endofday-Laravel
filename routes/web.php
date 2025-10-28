@@ -1,8 +1,9 @@
 <?php
 
-use Illuminate\Support\Facades\Auth;
+// use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\ContactUsController;
 use App\Http\Controllers\OrderController;
 use App\Http\Middleware\CustomerMiddleware;
 use App\Http\Controllers\CustomerController;
@@ -10,7 +11,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\RestaurantController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Middleware\RestaurantOwnerMiddleware;
-use Pest\ArchPresets\Custom;
+// use Pest\ArchPresets\Custom;
 
 //Signup Pages
 
@@ -50,6 +51,16 @@ Route::get('/reset-password/{token}', [LoginController::class, 'showupdatepasswo
     ->name('password.reset');
 
 Route::post('/resetpassword', [LoginController::class, 'resetpassword'])->name('resetpassword');
+
+
+
+
+//Contact Us Page
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/contact', [ContactUsController::class, 'contactus'])->name('ContactUs');
+    Route::post('/contact', [ContactUsController::class, 'store'])->name('ContactUs.submit');
+});
 
 //All Restaurant Routes
 
@@ -138,4 +149,5 @@ Route::middleware([CustomerMiddleware::class])->group(function () {
     Route::post('/Customer/placeorder', [CustomerController::class, 'placeorder'])->name('Customer.placeorder');
     Route::get('/Customer/showorders', [CustomerController::class, 'showorders'])->name('Customer.orders.show');
     Route::post('/Customer/review', [CustomerController::class, 'submitReview'])->name('Customer.orders.review');
+    Route::patch('/Customer/orders/{order}/cancel', [CustomerController::class, 'cancel'])->name('Customer.orders.cancel');
 });
