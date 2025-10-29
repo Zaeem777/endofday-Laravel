@@ -34,6 +34,7 @@
                     <thead class="bg-gray-50">
                         <tr class="text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                             <th class="px-6 py-3">Order ID</th>
+                            <th class="px-6 py-3">Rating</th>
                             <th class="px-6 py-3">Customer</th>
                             <th class="px-6 py-3">Items</th>
                             <th class="px-6 py-3">Total</th>
@@ -46,12 +47,30 @@
                     <tbody class="bg-white divide-y divide-gray-100">
                         @forelse ($orders as $order)
                             <tr class="hover:bg-gray-50 transition duration-150">
+
                                 <!-- Order ID -->
                                 <td class="px-6 py-4 whitespace-nowrap font-semibold text-gray-800">
                                     <a href="{{ route('Restaurant.show.order', $order->id) }}"
                                         class="hover:text-purple-600 transition">
                                         #{{ $order->id }}
                                     </a>
+                                </td>
+
+                                <!-- ⭐ Rating Column -->
+                                <td class="px-6 py-4 whitespace-nowrap text-gray-700">
+                                    @if(!empty($order->review))
+                                        <div class="flex items-center space-x-1">
+                                            @for ($i = 1; $i <= 5; $i++)
+                                                <svg class="w-4 h-4 {{ $i <= $order->review ? 'text-yellow-400' : 'text-gray-300' }}"
+                                                    fill="currentColor" viewBox="0 0 20 20">
+                                                    <path
+                                                        d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.975a1 1 0 00.95.69h4.18c.969 0 1.371 1.24.588 1.81l-3.385 2.462a1 1 0 00-.364 1.118l1.287 3.974c.3.921-.755 1.688-1.54 1.118l-3.385-2.46a1 1 0 00-1.176 0l-3.385 2.46c-.785.57-1.84-.197-1.54-1.118l1.287-3.974a1 1 0 00-.364-1.118L2.045 9.4c-.783-.57-.38-1.81.588-1.81h4.18a1 1 0 00.95-.69l1.286-3.974z" />
+                                                </svg>
+                                            @endfor
+                                        </div>
+                                    @else
+                                        <span class="text-gray-400 text-sm italic">Not rated</span>
+                                    @endif
                                 </td>
 
                                 <!-- Customer -->
@@ -101,7 +120,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="px-6 py-6 text-center text-gray-500">
+                                <td colspan="8" class="px-6 py-6 text-center text-gray-500">
                                     No orders found.
                                 </td>
                             </tr>

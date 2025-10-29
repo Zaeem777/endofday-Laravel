@@ -11,6 +11,8 @@ use App\Models\Listings;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Stripe\Stripe;
+use Stripe\Checkout\Session as StripeSession;
 
 class CustomerController extends Controller
 {
@@ -33,10 +35,10 @@ class CustomerController extends Controller
         $customer = Auth::user();
 
         $request->validate([
-            'name' => 'nullable|string|max:255',
-            'email' => 'nullable|email|unique:users,email,' . $customer->id,
-            'phone' => 'nullable|string|max:11',
-            'password' => 'nullable|string|min:6|confirmed',
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $customer->id,
+            'phone' => 'required|string|max:11',
+            'password' => 'required|string|min:6|confirmed',
         ]);
 
         if ($request->filled('name')) {
@@ -112,8 +114,8 @@ class CustomerController extends Controller
         $request->validate([
             'address_line1' => 'required|string|max:255',
             'city' => 'required|string|max:100',
-            'state' => 'nullable|string|max:100',
-            'postal_code' => 'nullable|string|max:20',
+            'state' => 'required|string|max:100',
+            'postal_code' => 'required|string|max:20',
             'country' => 'required|string|max:100',
         ]);
 
@@ -139,68 +141,345 @@ class CustomerController extends Controller
 
 
     //Place Order
+    // public function placeOrder(Request $request)
+    // {
+    //     $request->validate([
+    //         'address_id' => 'required|exists:addresses,id',
+    //         'special_instructions' => 'required|string|max:500',
+    //         'payment_method' => 'required| in:Cash,Card'
+    //     ]);
+
+    //     $user = Auth::user();
+
+    //     $cartItems = cart::with('listing')->where('customer_id', $user->id)->get();
+    //     if ($cartItems->isEmpty()) {
+    //         return redirect()->back()->with('error', 'Your cart is empty.');
+    //     }
+
+    //     $subtotal = $cartItems->sum(fn($item) => $item->listing->discountedprice * $item->quantity);
+    //     $deliveryFee = 200; // Change if dynamic
+    //     $totalPrice = $subtotal + $deliveryFee;
+
+    //     $restaurantId = $cartItems->first()->listing->bakery_id;
+
+    //     $order = Order::create([
+    //         'user_id' => $user->id,
+    //         'restaurant_id' => $restaurantId,
+    //         'address_id' => $request->address_id,
+    //         'status' => 'pending',
+    //         'payment_status' => $request->payment_method === 'Card' ? 'unpaid' : 'paid',
+    //         'payment_method' => ucfirst($request->payment_method),
+    //         'subtotal' => $subtotal,
+    //         'delivery_fee' => $deliveryFee,
+    //         'total_price' => $totalPrice,
+    //         'special_instructions' => $request->special_instructions,
+    //     ]);
+
+    //     foreach ($cartItems as $item) {
+    //         Order_items::create([
+    //             'listing_id' => $item->listing_id,
+    //             'order_id' => $order->id,
+    //             'quantity' => $item->quantity,
+    //             'price' => $item->listing->discountedprice,
+    //         ]);
+
+    //         $item->listing->decrement('remainingitem', $item->quantity);
+    //     }
+
+    //     if ($request->payment_method === 'Cash') {
+    //         Cart::where('customer_id', $user->id)->delete();
+
+    //         return redirect()->route('Customer.orders.show')
+    //             ->with('success', 'Order placed successfully');
+    //     }
+
+    //     Stripe::setApiKey(config('services.stripe.secret'));
+
+    //     $lineItems = [];
+    //     foreach ($cartItems as $item) {
+    //         $lineItems[] = [
+    //             'price_data' => [
+    //                 'currency' => 'pkr',
+    //                 // 'product_data' => ['name' => $item->listing_name],
+    //                 'product_data' => ['name' => $item->listing->name],
+
+    //                 'unit_amount' => $item->listing->discountedprice * 100,
+    //             ],
+    //             'quantity' => $item->quantity,
+    //         ];
+    //     }
+
+    //     $lineItems[] = [
+    //         'price_data' => [
+    //             'currency' => 'pkr',
+    //             'product_data' => ['name' => 'Delivery Fee'],
+    //             'unit_amount' => $deliveryFee * 100,
+    //         ],
+    //         'quantity' => 1,
+    //     ];
+
+
+    //     $checkoutSession = StripeSession::create([
+    //         'payment_method_types' => ['card'],
+    //         'line_items' => $lineItems,
+    //         'mode' => 'payment',
+    //         'success_url' => route('stripe.success', ['order' => $order->id]),
+    //         'cancel_url' => route('stripe.cancel', ['order' => $order->id]),
+    //     ]);
+
+
+    //     return redirect($checkoutSession->url);
+    // }
+
+
+    // public function placeOrder(Request $request)
+    // {
+    //     $request->validate([
+    //         'address_id' => 'required|exists:addresses,id',
+    //         'special_instructions' => 'required|string|max:500',
+    //         'payment_method' => 'required|in:Cash,Card',
+    //     ]);
+
+    //     $user = Auth::user();
+
+    //     // 🛒 Fetch user's cart
+    //     $cartItems = Cart::with('listing')->where('customer_id', $user->id)->get();
+    //     if ($cartItems->isEmpty()) {
+    //         return redirect()->back()->with('error', 'Your cart is empty.');
+    //     }
+
+    //     $subtotal = $cartItems->sum(fn($item) => $item->listing->discountedprice * $item->quantity);
+    //     $deliveryFee = 200;
+    //     $totalPrice = $subtotal + $deliveryFee;
+    //     $restaurantId = $cartItems->first()->listing->bakery_id;
+
+    //     // 🧾 Create Order Record
+    //     $order = Order::create([
+    //         'user_id' => $user->id,
+    //         'restaurant_id' => $restaurantId,
+    //         'address_id' => $request->address_id,
+    //         'status' => 'pending',
+    //         'payment_status' => $request->payment_method === 'Card' ? 'unpaid' : 'paid',
+    //         'payment_method' => $request->payment_method,
+    //         'subtotal' => $subtotal,
+    //         'delivery_fee' => $deliveryFee,
+    //         'total_price' => $totalPrice,
+    //         'special_instructions' => $request->special_instructions,
+    //     ]);
+
+    //     foreach ($cartItems as $item) {
+    //         Order_items::create([
+    //             'listing_id' => $item->listing_id,
+    //             'order_id' => $order->id,
+    //             'quantity' => $item->quantity,
+    //             'price' => $item->listing->discountedprice,
+    //         ]);
+
+    //         // Decrease inventory
+    //         $item->listing->decrement('remainingitem', $item->quantity);
+    //     }
+
+    //     // 💵 Cash on Delivery Flow
+    //     if ($request->payment_method === 'Cash') {
+    //         // Clear Cart
+    //         Cart::where('customer_id', $user->id)->delete();
+
+    //         return redirect()->route('Customer.orders.show')
+    //             ->with('success', 'Order placed successfully.');
+    //     }
+
+    //     // 💳 Stripe Payment Flow
+    //     try {
+    //         \Stripe\Stripe::setApiKey(config('services.stripe.secret'));
+
+    //         $lineItems = [];
+
+    //         // Add each product to Stripe Checkout
+    //         foreach ($cartItems as $item) {
+    //             $lineItems[] = [
+    //                 'price_data' => [
+    //                     'currency' => 'pkr',
+    //                     'product_data' => [
+    //                         'name' => $item->listing->name,
+    //                     ],
+    //                     'unit_amount' => $item->listing->discountedprice * 100, // Stripe expects amount in paisa
+    //                 ],
+    //                 'quantity' => $item->quantity,
+    //             ];
+    //         }
+
+    //         // Add delivery fee as separate line item
+    //         $lineItems[] = [
+    //             'price_data' => [
+    //                 'currency' => 'pkr',
+    //                 'product_data' => ['name' => 'Delivery Fee'],
+    //                 'unit_amount' => $deliveryFee * 100,
+    //             ],
+    //             'quantity' => 1,
+    //         ];
+
+    //         // ✅ Create Stripe Checkout Session
+    //         $checkoutSession = \Stripe\Checkout\Session::create([
+    //             'payment_method_types' => ['card'],
+    //             'line_items' => $lineItems,
+    //             'mode' => 'payment',
+    //             'success_url' => route('stripe.success', ['order' => $order->id]),
+    //             'cancel_url' => route('stripe.cancel', ['order' => $order->id]),
+    //         ]);
+
+    //         // Redirect to Stripe payment page
+    //         return redirect($checkoutSession->url);
+    //     } catch (\Exception $e) {
+    //         // 🧯 Handle Stripe error gracefully
+    //         return redirect()->back()->with('error', 'Stripe error: ' . $e->getMessage());
+    //     }
+    // }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     public function placeOrder(Request $request)
     {
+
         $request->validate([
             'address_id' => 'required|exists:addresses,id',
             'special_instructions' => 'nullable|string|max:500',
+            'payment_method' => 'required|in:Cash,Card',
         ]);
 
         $user = Auth::user();
 
-        $cartItems = cart::with('listing')->where('customer_id', $user->id)->get();
+        // fetch cart
+        $cartItems = Cart::with('listing')->where('customer_id', $user->id)->get();
         if ($cartItems->isEmpty()) {
+            // If AJAX (JSON) request, return JSON; else redirect back
+            if ($request->wantsJson()) {
+                return response()->json(['error' => 'Cart is empty.'], 400);
+            }
             return redirect()->back()->with('error', 'Your cart is empty.');
         }
 
         $subtotal = $cartItems->sum(fn($item) => $item->listing->discountedprice * $item->quantity);
-        $deliveryFee = 200; // Change if dynamic
+        $deliveryFee = 200;
         $totalPrice = $subtotal + $deliveryFee;
-
         $restaurantId = $cartItems->first()->listing->bakery_id;
 
+        // create order record (unpaid for both flows)
         $order = Order::create([
             'user_id' => $user->id,
             'restaurant_id' => $restaurantId,
             'address_id' => $request->address_id,
             'status' => 'pending',
-            'payment_status' => 'unpaid',
+            'payment_status' => 'unpaid', // ALWAYS unpaid until payment confirmed
+            'payment_method' => $request->payment_method,
             'subtotal' => $subtotal,
             'delivery_fee' => $deliveryFee,
             'total_price' => $totalPrice,
             'special_instructions' => $request->special_instructions,
         ]);
 
-        foreach ($cartItems as $item) {
-            Order_items::create([
-                'listing_id' => $item->listing_id,
-                'order_id' => $order->id,
-                'quantity' => $item->quantity,
-                'price' => $item->listing->discountedprice,
-            ]);
+        // If Cash: create items immediately, decrement inventory, clear cart, redirect
+        if ($request->payment_method === 'Cash') {
 
-            $item->listing->decrement('remainingitem', $item->quantity);
+            foreach ($cartItems as $item) {
+                Order_items::create([
+                    'listing_id' => $item->listing_id,
+                    'order_id' => $order->id,
+                    'quantity' => $item->quantity,
+                    'price' => $item->listing->discountedprice,
+                ]);
+
+                $item->listing->decrement('remainingitem', $item->quantity);
+            }
+
+            Cart::where('customer_id', $user->id)->delete();
+
+            // Normal redirect with flash (non-AJAX)
+            if (! $request->wantsJson()) {
+                return redirect()->route('Customer.orders.show')
+                    ->with('success', 'Order placed successfully (Cash). Payment status: unpaid.');
+            }
+
+            // If AJAX requested (shouldn't happen for Cash in our frontend), respond with redirect URL
+            return response()->json(['redirect' => route('Customer.orders.show')]);
         }
-        Cart::where('customer_id', $user->id)->delete();
 
-        return redirect()->route('Customer.orders.show')
-            ->with('success', 'Order placed successfully!');
+        // If Card: create Stripe Checkout Session and return checkout URL (order remains unpaid)
+        try {
+            Stripe::setApiKey(config('services.stripe.secret'));
+
+            $lineItems = [];
+
+            foreach ($cartItems as $item) {
+                $lineItems[] = [
+                    'price_data' => [
+                        'currency' => 'pkr',
+                        'product_data' => [
+                            'name' => $item->listing->name,
+                        ],
+                        'unit_amount' => intval($item->listing->discountedprice * 100),
+                    ],
+                    'quantity' => $item->quantity,
+                ];
+            }
+
+            // Delivery fee
+            $lineItems[] = [
+                'price_data' => [
+                    'currency' => 'pkr',
+                    'product_data' => ['name' => 'Delivery Fee'],
+                    'unit_amount' => intval($deliveryFee * 100),
+                ],
+                'quantity' => 1,
+            ];
+
+            $checkoutSession = StripeSession::create([
+                'payment_method_types' => ['card'],
+                'line_items' => $lineItems,
+                'mode' => 'payment',
+                // redirect back to your site. Using route param array is important
+                'success_url' => route('stripe.success', ['order' => $order->id]),
+                'cancel_url' => route('stripe.cancel', ['order' => $order->id]),
+            ]);
+            return redirect($checkoutSession->url);
+
+            // return response()->json(['url' => $checkoutSession->url]);
+        } catch (\Exception $e) {
+            Log::error('Stripe create session error: ' . $e->getMessage());
+            return response()->json(['error' => 'Stripe error: ' . $e->getMessage()], 500);
+        }
     }
-
-    public function showorders()
+    public function showorders(Request $request)
     {
         $id = Auth::id();
-        $orders = Order::with(['user',  'items.listing.owner'])
+        $status = $request->query('status');
+
+        $query = Order::with(['user',  'items.listing.owner'])
             ->where('user_id', $id)
-            ->orderBy('created_at', 'desc')
-            ->get()
-            ->map(function ($order) {
-                $order->cancel = $order->created_at >= now()->subMinutes(10);
-                return $order;
-            });
+            ->orderBy('created_at', 'desc');
+
+        if ($status && $status !== 'all') {
+            $query->where('status', $status);
+        }
+
+        $orders = $query->get()->map(function ($order) {
+            $order->cancel = $order->created_at >= now()->subMinutes(10);
+            return $order;
+        });
 
         // dd('', $orders);
-        return view('Customer.orders', compact('orders'));
+        return view('Customer.orders', compact('orders', 'status'));
     }
 
     public function cancel(Order $order)
@@ -219,8 +498,6 @@ class CustomerController extends Controller
 
         return response()->json(['success' => true, 'message' => 'Order has been cancelled successfully.']);
     }
-
-
     public function submitReview(Request $request)
     {
         try {

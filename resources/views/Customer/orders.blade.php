@@ -1,15 +1,39 @@
 <x-customer-layout>
-    <!-- Include SweetAlert2 -->
+    <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <div class="max-w-6xl mx-auto px-6 py-12">
-        <!-- Page Header -->
+        <!-- Header -->
         <div class="flex items-center justify-between mb-10">
             <h1 class="text-4xl font-bold text-gray-900 flex items-center gap-3">
                 My Orders
             </h1>
         </div>
 
+        <!-- 🔽 Filter Dropdown -->
+        <div class="flex items-center justify-end mb-8">
+            <form method="GET" action="{{ route('Customer.orders.show') }}" class="flex items-center gap-3">
+                <label for="status" class="font-medium text-gray-700">Filter by Status:</label>
+                <select id="status" name="status"
+                    class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition"
+                    onchange="this.form.submit()">
+                    <option value="all" {{ ($status ?? 'all') === 'all' ? 'selected' : '' }}>All Orders</option>
+                    <option value="pending" {{ ($status ?? '') === 'pending' ? 'selected' : '' }}>Pending</option>
+                    <option value="inprocess" {{ ($status ?? '') === 'inprocess' ? 'selected' : '' }}>In Process</option>
+                    <option value="ready" {{ ($status ?? '') === 'ready' ? 'selected' : '' }}>Ready</option>
+                    <option value="completed" {{ ($status ?? '') === 'completed' ? 'selected' : '' }}>Completed</option>
+                    <option value="cancelled" {{ ($status ?? '') === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+                </select>
+            </form>
+        </div>
+
+        @if($status && $status !== 'all')
+            <p class="text-sm text-gray-600 mb-6">
+                Showing <span class="font-semibold text-blue-600">{{ ucfirst($status) }}</span> orders
+            </p>
+        @endif
+
+        <!-- Orders Section -->
         @if ($orders->isEmpty())
             <div class="bg-white p-10 rounded-2xl shadow-sm border text-center">
                 <p class="text-gray-500 text-lg">You haven’t placed any orders yet.</p>
@@ -20,7 +44,7 @@
                     <div x-data="{ open: false, showReview: false, rating: 0 }"
                         class="bg-white border border-gray-100 rounded-2xl shadow-md hover:shadow-xl transition duration-300 overflow-hidden">
 
-                        <!-- Order Card Header -->
+                        <!-- Order Header Image -->
                         <div class="relative h-40 w-full overflow-hidden">
                             @php
                                 $firstItem = $order->items->first();
@@ -28,7 +52,6 @@
                                     ? asset('storage/' . $firstItem->listing->owner->image)
                                     : Storage::url('no-image.jpg');
                             @endphp
-
                             <img src="{{ $restaurantImage }}" alt="Restaurant Image"
                                 class="w-full h-40 object-cover transition-transform duration-300 hover:scale-105">
 
@@ -45,11 +68,9 @@
                             </div>
                         </div>
 
-                        <!-- Card Content -->
+                        <!-- Card Body -->
                         <div class="p-6">
-                            @php
-                                $firstItem = $order->items->first();
-                            @endphp
+                            @php $firstItem = $order->items->first(); @endphp
 
                             <div class="flex justify-between items-start">
                                 <div>
@@ -81,7 +102,7 @@
                                 @endif
                             </div>
 
-                            <!-- Review Stars -->
+                            <!-- Review Section -->
                             <div x-show="showReview" x-transition class="mt-4 border-t pt-4">
                                 <p class="text-gray-700 mb-2 font-medium">Rate your experience:</p>
                                 <div class="flex space-x-2">
@@ -102,43 +123,17 @@
                                                 })
                                                 .then(async (res) => {
                                                     const data = await res.json().catch(() => null);
-                                                    if (!res.ok || !data) throw new Error('Invalid response');
-
-                                                    if (data.success) {
+                                                    if (data?.success) {
                                                         showReview = false;
                                                         Swal.fire({
                                                             title: 'Thank You!',
                                                             text: '⭐ Thanks for your review!',
                                                             icon: 'success',
                                                             confirmButtonColor: '#3085d6'
-                                                        }).then(()=>{
-                                                            window.location.reload();
-                                                        });
-
-                                                        // Replace button with badge instantly
-                                                        const reviewSection = $el.closest('.review-section');
-                                                        if (reviewSection) {
-                                                            reviewSection.innerHTML = `
-                                                                <span class='px-4 py-2 rounded-lg bg-green-100 text-green-700 font-semibold text-sm'>
-                                                                    Reviewed (${i} ★)
-                                                                </span>`;
-                                                        }
-                                                    } else {
-                                                        Swal.fire({
-                                                            title: 'Error',
-                                                            text: data.message || 'Error submitting review.',
-                                                            icon: 'error'
-                                                        });
+                                                        }).then(()=>window.location.reload());
                                                     }
                                                 })
-                                                .catch(err => {
-                                                    console.error(err);
-                                                    Swal.fire({
-                                                        title: 'Error',
-                                                        text: 'Something went wrong while submitting review.',
-                                                        icon: 'error'
-                                                    });
-                                                });
+                                                .catch(() => Swal.fire({title: 'Error', text: 'Error submitting review.', icon: 'error'}));
                                             "
                                             :class="i <= rating ? 'text-yellow-400' : 'text-gray-300'"
                                             class="w-8 h-8 cursor-pointer transition-transform transform hover:scale-110"
@@ -150,7 +145,7 @@
                                 </div>
                             </div>
 
-                            <!-- Actions (Details + Cancel Button) -->
+                            <!-- Details + Cancel Buttons -->
                             <div class="mt-6 flex justify-between items-center border-t pt-4">
                                 <button @click="open = !open"
                                     class="text-sm font-medium text-blue-700 hover:text-blue-900 transition">
@@ -167,8 +162,7 @@
                                             showCancelButton: true,
                                             confirmButtonColor: '#d33',
                                             cancelButtonColor: '#3085d6',
-                                            confirmButtonText: 'Yes, cancel it',
-                                            cancelButtonText: 'No, keep it'
+                                            confirmButtonText: 'Yes, cancel it'
                                         }).then((result) => {
                                             if (result.isConfirmed) {
                                                 fetch('{{ route('Customer.orders.cancel', $order->id) }}', {
@@ -185,13 +179,8 @@
                                                         Swal.fire({
                                                             title: 'Cancelled!',
                                                             text: data.message,
-                                                            icon: 'success',
-                                                            confirmButtonColor: '#3085d6'
-                                                        });
-
-                                                        $el.querySelector('span').textContent = 'Cancelled';
-                                                        $el.querySelector('span').className =
-                                                            'px-3 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-700';
+                                                            icon: 'success'
+                                                        }).then(()=>window.location.reload());
                                                     } else {
                                                         Swal.fire({
                                                             title: 'Error',
@@ -199,13 +188,6 @@
                                                             icon: 'error'
                                                         });
                                                     }
-                                                })
-                                                .catch(() => {
-                                                    Swal.fire({
-                                                        title: 'Error',
-                                                        text: 'Something went wrong while cancelling.',
-                                                        icon: 'error'
-                                                    });
                                                 });
                                             }
                                         });
@@ -238,7 +220,6 @@
                                                             ? Storage::url($item->listing->image)
                                                             : Storage::url('no-image.jpg') }}"
                                                             class="w-10 h-10 rounded-lg object-cover border">
-
                                                         <div>
                                                             <p class="font-medium">{{ $item->listing->name ?? 'Item Deleted' }}</p>
                                                             <p class="text-xs text-gray-500">Qty: {{ $item->quantity }}</p>

@@ -21,6 +21,7 @@ class Order extends Model
         'special_instructions',
         'review_status',
         'review',
+        'payment_method'
     ];
     public function user()
     {

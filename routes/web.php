@@ -1,6 +1,5 @@
 <?php
 
-// use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\ContactUsController;
@@ -11,7 +10,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\RestaurantController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Middleware\RestaurantOwnerMiddleware;
-// use Pest\ArchPresets\Custom;
+use App\Http\Controllers\StripeController;
 
 //Signup Pages
 
@@ -151,3 +150,10 @@ Route::middleware([CustomerMiddleware::class])->group(function () {
     Route::post('/Customer/review', [CustomerController::class, 'submitReview'])->name('Customer.orders.review');
     Route::patch('/Customer/orders/{order}/cancel', [CustomerController::class, 'cancel'])->name('Customer.orders.cancel');
 });
+
+
+//Stripe RouteS 
+
+Route::post('/stripe/session', [StripeController::class, 'createSession'])->name('stripe.session');
+Route::get('/stripe/success/{order}', [StripeController::class, 'stripeSuccess'])->name('stripe.success');
+Route::get('/stripe/cancel/{order}', [StripeController::class, 'stripeCancel'])->name('stripe.cancel');

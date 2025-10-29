@@ -24,6 +24,7 @@ return new class extends Migration
             $table->decimal('delivery_fee', 10, 2)->default(0);
             $table->decimal('total_price', 10, 2)->default(0);
             $table->text('special_instructions')->nullable();
+
             $table->enum('review_status', ['Not Reviewed', 'Reviewed'])->default('Not Reviewed');
             $table->enum('review', ['0', '1', '2', '3', '4', '5'])->default('0');
             $table->timestamps();

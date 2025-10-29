@@ -18,10 +18,27 @@
                     class="p-6 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center">
                     <div>
                         <h2 class="text-xl font-semibold text-gray-800">Order #{{ $order->id }}</h2>
-                        <p class="text-gray-500 text-sm mt-1">Placed on
-                            {{ $order->created_at->format('F j, Y • g:i A') }}
+                        <p class="text-gray-500 text-sm mt-1">
+                            Placed on {{ $order->created_at->format('F j, Y • g:i A') }}
                         </p>
+
+                        {{-- ✅ Show rating if reviewed --}}
+                        @if($order->review_status === 'Reviewed')
+                            <div class="mt-3 flex items-center">
+                                <p class="text-sm font-semibold text-gray-700 mr-2">Customer Rating:</p>
+                                <div class="flex">
+                                    @for ($i = 1; $i <= 5; $i++)
+                                        <svg class="w-5 h-5 {{ $i <= $order->review ? 'text-yellow-400' : 'text-gray-300' }}"
+                                            fill="currentColor" viewBox="0 0 20 20">
+                                            <path
+                                                d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.975a1 1 0 00.95.69h4.18c.969 0 1.371 1.24.588 1.81l-3.385 2.462a1 1 0 00-.364 1.118l1.287 3.974c.3.921-.755 1.688-1.54 1.118l-3.385-2.46a1 1 0 00-1.176 0l-3.385 2.46c-.785.57-1.84-.197-1.54-1.118l1.287-3.974a1 1 0 00-.364-1.118L2.045 9.4c-.783-.57-.38-1.81.588-1.81h4.18a1 1 0 00.95-.69l1.286-3.974z" />
+                                        </svg>
+                                    @endfor
+                                </div>
+                            </div>
+                        @endif
                     </div>
+
                     @php
                         $statusColors = [
                             'completed' => 'green',
@@ -29,10 +46,10 @@
                             'in process' => 'purple',
                             'ready' => 'purple',
                             'cancelled' => 'red',
-
                         ];
                         $color = $statusColors[strtolower($order->status)] ?? 'gray';
                     @endphp
+
                     <form action="{{ route('orders.updateStatus', $order->id) }}" method="POST"
                         class="flex items-center space-x-3 mt-3 sm:mt-0">
                         @csrf
@@ -48,7 +65,6 @@
                             </option>
                             <option value="cancelled" {{ $order->status === 'cancelled' ? 'selected' : '' }}>Cancel
                             </option>
-
                         </select>
 
                         <button type="submit"
@@ -56,7 +72,6 @@
                             Update
                         </button>
                     </form>
-
                 </div>
 
                 <!-- Customer Info -->
@@ -64,7 +79,6 @@
                     <div>
                         <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Customer Info</h3>
                         <div class="mt-3 bg-gray-50 border border-gray-200 rounded-lg p-4">
-                            {{-- <h3 class="text-sm font-semibold text-gray-500 uppercase">Customer Info</h3> --}}
                             <p class="text-gray-800 font-medium mt-2">{{ $order->user->name ?? 'Guest' }}</p>
                             <p class="text-gray-600 text-sm">{{ $order->user->email ?? 'N/A' }}</p>
                             <p class="text-gray-600 text-sm mt-3">
@@ -95,20 +109,16 @@
                             <p class="text-gray-500 mt-2 italic">No address provided for this order.</p>
                         @endif
                     </div>
-
                 </div>
+
                 <div class="p-6 grid grid-cols-1 sm:grid-cols-1">
                     <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Special Instructions</h3>
                     <div class="mt-3 bg-gray-50 border border-gray-200 rounded-lg p-4">
                         @if($order->special_instructions)
-
                             <p class="text-gray-800 font-medium mt-2">{{ $order->special_instructions}}</p>
-
                         @else
                             <p class="text-gray-800 font-medium mt-2">No Special Instructions</p>
-
                         @endif
-
                     </div>
                 </div>
             </div>
@@ -148,27 +158,18 @@
                         </tbody>
                         <tfoot class="bg-gray-50 font-semibold text-gray-700">
                             <tr>
-                                <!-- Left-most: Delivery Fee -->
                                 <td colspan="3" class="px-6 py-4 text-left">
                                     Delivery Fee: ₨ {{ number_format($order->delivery_fee, 0) }}
                                 </td>
-
-                                <!-- Spacer columns (optional, for layout balance) -->
                                 <td colspan="2"></td>
-
-                                <!-- Right-most: Total -->
                                 <td colspan="2" class="px-6 py-4 text-right text-green-600 font-bold">
                                     Total: ₨ {{ number_format($order->total_price, 0) }}
                                 </td>
                             </tr>
                         </tfoot>
-
                     </table>
                 </div>
             </div>
-
-            <!-- Action Buttons -->
-
         </div>
     </div>
 </x-layout>
