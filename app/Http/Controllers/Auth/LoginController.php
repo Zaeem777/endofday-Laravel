@@ -23,6 +23,17 @@ class LoginController extends Controller
             'password' => 'required',
         ]);
 
+
+        // ✅ Hardcoded admin login
+        if ($credentials['email'] === 'admin@gmail.com' && $credentials['password'] === 'admin123') {
+            // Regenerate session for security
+            $request->session()->regenerate();
+
+            session(['user_role' => 'admin', 'user_email' => $credentials['email']]);
+
+            return redirect()->intended('/Admin/dashboard')->with('success', 'Welcome Admin!');
+        }
+
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
 

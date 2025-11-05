@@ -1,5 +1,5 @@
 <x-customer-layout>
-    <div class="max-w-7xl mx-auto px-6 py-12 bg-gray-50 min-h-screen"
+    <div class=" mx-auto px-6 py-12 bg-gray-50 min-h-screen"
         x-data="checkoutCart({{ $cartItems->map(fn($i) => [
             'id' => $i->id,
             'name' => $i->listing->name,

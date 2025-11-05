@@ -2,7 +2,7 @@
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-    <div class="max-w-6xl mx-auto px-6 py-12">
+    <div class=" mx-auto px-6 py-12">
         <!-- Header -->
         <div class="flex items-center justify-between mb-10">
             <h1 class="text-4xl font-bold text-gray-900 flex items-center gap-3">

@@ -1,5 +1,5 @@
 <x-customer-layout>
-    <div class="max-w-7xl mx-auto px-6 py-10">
+    <div class=" mx-auto px-6 py-10">
         <!-- Header -->
         <div class="text-center mb-10">
             <h1 class="text-4xl font-extrabold text-gray-900 mb-3 tracking-tight">

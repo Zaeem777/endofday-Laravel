@@ -4,12 +4,14 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\ContactUsController;
 use App\Http\Controllers\OrderController;
-use App\Http\Middleware\CustomerMiddleware;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\RestaurantController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Middleware\CustomerMiddleware;
 use App\Http\Middleware\RestaurantOwnerMiddleware;
+use App\Http\Middleware\AdminMiddleware;
 use App\Http\Controllers\StripeController;
 
 //Signup Pages
@@ -63,11 +65,12 @@ Route::middleware(['auth'])->group(function () {
 
 //All Restaurant Routes
 
+Route::get('/Restaurant/orderDetail/{id}', [RestaurantController::class, 'showorder'])->name('Restaurant.show.order');
+
 //Dashboard Routes
 Route::middleware([RestaurantOwnerMiddleware::class])->group(function () {
     Route::get('/Restaurant/dashboard', [RestaurantController::class, 'viewRestaurantDashboard'])->name('Restaurant.dashboard');
     Route::get('/Restaurant/chartdata', [RestaurantController::class, 'getChartData'])->name('Restaurant.chartdata');
-    Route::get('/Restaurant/orderDetail/{id}', [RestaurantController::class, 'showorder'])->name('Restaurant.show.order');
     Route::patch('/orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.updateStatus');
     Route::get('/Restaurant/allorders', [RestaurantController::class, 'allorders'])->name('Restaurant.allorders');
 });
@@ -157,3 +160,9 @@ Route::middleware([CustomerMiddleware::class])->group(function () {
 Route::post('/stripe/session', [StripeController::class, 'createSession'])->name('stripe.session');
 Route::get('/stripe/success/{order}', [StripeController::class, 'stripeSuccess'])->name('stripe.success');
 Route::get('/stripe/cancel/{order}', [StripeController::class, 'stripeCancel'])->name('stripe.cancel');
+
+
+//All Admin Routes
+Route::middleware([AdminMiddleware::class])->group(function () {
+    Route::get('/Admin/dashboard', [AdminController::class, 'viewdashboard'])->name('admin.dashboard');
+});

@@ -1,6 +1,6 @@
 <x-layout>
     <div class="min-h-screen py-10">
-        <div class="max-w-5xl mx-auto px-6">
+        <div class="mx-auto px-6">
             <!-- Header -->
             <div class="flex items-center justify-between mb-8">
                 <div>

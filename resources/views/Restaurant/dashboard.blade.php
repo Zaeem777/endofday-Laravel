@@ -1,7 +1,7 @@
 <x-layout>
     <div class="min-h-screen ">
         <!-- Page Heading -->
-        <div class="max-w-7xl mx-auto px-4 py-8 flex items-center justify-between">
+        <div class=" mx-auto px-4 py-8 flex items-center justify-between">
             <div>
                 <h1 class="text-3xl font-bold text-gray-800 flex items-center gap-3">
                     🍽️ Restaurant Dashboard
@@ -32,7 +32,7 @@
             </div>
         </div>
 
-        <div class="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class=" mx-auto px-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
 
             <div class="bg-white shadow rounded-xl p-6">
                 <h2 class="text-sm font-semibold text-gray-500">Total Listings</h2>
@@ -56,7 +56,7 @@
         </div>
 
         <!-- Recent Orders -->
-        <div class="max-w-7xl mx-auto px-4 mt-8">
+        <div class=" mx-auto px-4 mt-8">
             <div class="bg-white shadow rounded-xl p-6">
                 <h2 class="text-lg font-semibold text-gray-800">Recent Orders</h2>
                 @if($recentOrders->count() > 0)
@@ -129,7 +129,7 @@
         </div>
 
         <!-- Graphs Section -->
-        <div class="max-w-7xl mx-auto px-4 mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class=" mx-auto px-4 mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
             <!-- Sales Chart -->
             <div class="bg-white shadow rounded-xl p-6 relative">
                 <h2 class="text-lg font-semibold text-gray-800">Sales Overview</h2>

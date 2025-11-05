@@ -16,7 +16,7 @@
 
     <!-- Navbar -->
     <nav class="bg-white shadow-md w-full z-10">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class=" mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
 
                 <!-- Left Side -->
@@ -81,9 +81,11 @@
         </div>
 
         <!-- Main Content -->
-        <main class="flex-1 p-6">
-            {{ $slot }}
-        </main>
+        {{-- <main class="flex-1 p-6"> --}}
+            <main class="flex-1 transition-all duration-300 ease-in-out p-6" :class="sidebarOpen ? 'lg:ml-64' : 'ml-0'">
+
+                {{ $slot }}
+            </main>
     </div>
 
     <x-flash-message />

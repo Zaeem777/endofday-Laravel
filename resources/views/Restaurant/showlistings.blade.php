@@ -1,5 +1,5 @@
 <x-layout>
-    <div class="max-w-7xl mx-auto mt-10 px-4">
+    <div class=" mx-auto mt-10 px-4">
         <h2 class="text-3xl font-bold mb-8 text-gray-800 text-center">🍰 My Listings</h2>
 
         @if($listings->isEmpty())

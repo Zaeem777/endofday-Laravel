@@ -1,7 +1,7 @@
 <x-layout>
 
     <!-- All Orders -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-10">
+    <div class=" mx-auto px-4 sm:px-6 lg:px-8 mt-10">
         <div class="bg-white shadow-lg rounded-2xl overflow-hidden">
 
             <!-- Header + Filter -->

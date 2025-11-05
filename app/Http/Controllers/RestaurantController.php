@@ -325,12 +325,23 @@ class RestaurantController extends Controller
             ],
         ]);
     }
-
-    public function showorder($id)
+    public function showorder(Request $request, $id)
     {
-        $order = Order::with(['items.listing', 'user', 'address'])->findOrFail($id);
-        return view('Restaurant.showorder', compact('order'));
+        $isAdmin = session('user_role') === 'admin';
+        // $isRestaurant = $request->user()?->hasRole('restaurant');
+        // $isRestaurant = session('user_role') === 'restaurant';
+        $isRestaurant = Auth::id();
+        if ($isAdmin || $isRestaurant) {
+            $order = Order::with(['items.listing', 'user', 'address'])->findOrFail($id);
+            return view('Restaurant.showorder', compact('order'));
+        }
+
+        // abort(403, 'Unauthorized access');
+        return redirect('/login');
     }
+
+
+
 
     public function allorders(Request $request)
     {

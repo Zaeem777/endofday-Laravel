@@ -1,7 +1,6 @@
 <x-layout>
     <div class="min-h-screen">
-        <div
-            class="max-w-3xl mx-auto bg-white/90 backdrop-blur-md shadow-2xl rounded-2xl p-10 border border-purple-100">
+        <div class=" mx-auto bg-white/90 backdrop-blur-md shadow-2xl rounded-2xl p-10 border border-purple-100">
 
             <!-- Heading -->
             <h2 class="text-3xl font-extrabold text-center text-purple-800 mb-8">
